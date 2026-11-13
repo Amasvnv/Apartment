@@ -1004,19 +1004,26 @@ function monthSwitch(el, opts = {}) {
 /* ---------------- ເລີ່ມ ---------------- */
 document.addEventListener("DOMContentLoaded", () => {
   const page = document.body.dataset.page;
-  /* ຍັງບໍ່ໄດ້ເຂົ້າສູ່ລະບົບ → ໄປໜ້າ login */
-  if (page !== "login" && !currentUser()) {
+  /* ໜ້າທີ່ເປີດໃຫ້ເບິ່ງໄດ້ໂດຍບໍ່ຕ້ອງເຂົ້າສູ່ລະບົບ */
+  const PUBLIC_PAGES = ["login", "billcheck"];
+  const isPublic = PUBLIC_PAGES.includes(page);
+  const me = currentUser();
+  /* ຍັງບໍ່ໄດ້ເຂົ້າສູ່ລະບົບ → ໄປໜ້າ login (ເວັ້ນໜ້າສາທາລະນະ) */
+  if (!isPublic && !me) {
     location.replace("login.html");
     return;
   }
-  renderChrome();
-  applyViewerMode();
+  /* ຜູ້ເຍື່ອນຊົມທີ່ຍັງບໍ່ໄດ້ເຂົ້າລະບົບ ເຫັນໜ້າກວດບີນແບບບໍ່ມີເມນູ */
+  if (page !== "billcheck" || me) {
+    renderChrome();
+    applyViewerMode();
+  }
   if (typeof DB !== "undefined")
     DB.ready
       .then(() => {
         refreshNavBadges();
         /* ຫຼັງໂຫຼດຖານຂໍ້ມູນແລ້ວ: ຖ້າຜູ້ໃຊ້ຖືກປິດໃຊ້ ຫຼື ບໍ່ມີຢູ່ແລ້ວ → ອອກຈາກລະບົບ */
-        if (page !== "login" && !currentUser()) {
+        if (!isPublic && !currentUser()) {
           clearSession();
           location.replace("login.html");
         }
