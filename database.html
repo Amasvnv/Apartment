@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>ຖານຂໍ້ມູນ — ລະບົບຈັດການອາພາດເມັນ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Noto+Serif+Lao:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="database">
+<main class="page-wrap">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">ລະບົບ</p>
+      <h1>ເຊື່ອມຕໍ່ຖານຂໍ້ມູນ</h1>
+      <p class="page-sub" id="dbSub">ເກັບຫ້ອງພັກ, ຜູ້ເຊົ່າ ແລະ ໃບບີນເກັບເງີນ ໄວ້ໃນຖານຂໍ້ມູນຈິງ (Supabase / PostgreSQL)</p>
+    </div>
+    <div class="head-actions">
+      <a class="btn btn-outline btn-sm" href="index.html">ກັບໄປພາບລວມ</a>
+    </div>
+  </div>
+
+  <div class="db-layout">
+    <section class="card">
+      <div class="table-head" style="border-bottom:0;padding-bottom:0">
+        <div>
+          <h2>ການເຊື່ອມຕໍ່</h2>
+          <div class="t-sub">ຂໍ້ມູນການເຊື່ອມຕໍ່ຖືກເກັບໄວ້ໃນເບົາຣ໌ເຊີຂອງເຄື່ອງນີ້ເທົ່ານັ້ນ</div>
+        </div>
+      </div>
+
+      <div class="m-grid" style="margin-top:16px">
+        <div class="field full">
+          <label for="dbUrl">Project URL</label>
+          <input class="input" id="dbUrl" placeholder="https://xxxxxxx.supabase.co" spellcheck="false">
+        </div>
+        <div class="field full">
+          <label for="dbToken">anon / publishable key</label>
+          <input class="input" id="dbToken" type="password" placeholder="eyJhbGciOi... (anon key ເທົ່ານັ້ນ)" spellcheck="false">
+        </div>
+      </div>
+
+      <div class="db-actions">
+        <button class="btn btn-primary btn-sm" id="dbSave">ບັນທຶກ ແລະ ເຊື່ອມຕໍ່</button>
+        <button class="btn btn-outline btn-sm" id="dbTest">ທົດສອບການເຊື່ອມຕໍ່</button>
+        <button class="btn btn-ghost btn-sm btn-danger-outline" id="dbClear">ຍົກເລີກການເຊື່ອມຕໍ່</button>
+      </div>
+      <p class="db-note" id="dbNote" style="margin-top:12px"></p>
+    </section>
+
+    <section class="card">
+      <div class="table-head" style="border-bottom:0;padding-bottom:0">
+        <div>
+          <h2>ສະຖານະ</h2>
+          <div class="t-sub">ສະບັບຂໍ້ມູນທີ່ເວັບກຳລັງໃຊ້ຢູ່</div>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="db-kv"><span>ໂໝດ</span><b id="stMode">—</b></div>
+        <div class="db-kv"><span>ການເຊື່ອມຕໍ່</span><b id="stConn">—</b></div>
+        <div class="db-kv"><span>ປາຍທາງ</span><b id="stEndpoint" style="font-family:ui-monospace,Consolas,monospace;font-size:10px">—</b></div>
+        <div class="db-kv"><span>ຫ້ອງພັກ</span><b id="stRooms">0</b></div>
+        <div class="db-kv"><span>ຜູ້ເຊົ່າ</span><b id="stTenants">0</b></div>
+        <div class="db-kv"><span>ໃບບີນເກັບເງີນ</span><b id="stInvoices">0</b></div>
+        <div class="db-kv"><span>ອັບເດດລ່າສຸດ</span><b id="stUpdated">—</b></div>
+      </div>
+      <div class="db-actions">
+        <button class="btn btn-outline btn-sm" id="dbSchema">ສ້າງຕາຕະລາງ</button>
+        <button class="btn btn-primary btn-sm" id="dbSeed">ອັບໂຫຼດຂໍ້ມູນເຂົ້າຖານ</button>
+      </div>
+      <p class="db-note" id="dbNote2" style="margin-top:12px"></p>
+    </section>
+  </div>
+
+  <section class="card mt-14">
+    <h2>ຖ້າຍັງບໍ່ຕັ້ງຄ່າ Supabase</h2>
+    <p class="db-note" style="margin:8px 0 0">ເວັບຈະໃຊ້ <span class="code">server.py</span> + SQLite ທ້ອງຖິ່ນ (<span class="code">data/apartment.db</span>) ອັດຕະໂນມັດ. ເມື່ອຕັ້ງຄ່າ Supabase ແລ້ວ ຂໍ້ມູນຈະຖືກອ່ານ/ຂຽນກັບ Supabase ເປັນຫຼັກ ແລະ ບໍ່ຂຽນລົງ SQLite ອີກ.</p>
+  </section>
+
+  <section class="card mt-14">
+    <h2>ເຊື່ອມຕໍ່ Supabase (PostgreSQL)</h2>
+    <p class="t-sub" style="margin-bottom:12px">ຖານຂໍ້ມູນຈິງ ຢູ່ຄລາວ — ໃຊ້ໄດ້ຫຼາຍເຄື່ອງພ້ອມກັນ</p>
+    <ol class="steps">
+      <li>ສ້າງ project ທີ່ <span class="code">supabase.com</span> (Free tier ພຽງພໍ)</li>
+      <li>ເປີດ <b>SQL Editor</b> → ວາງ SQL ຈາກໄຟລ໌ <span class="code">db/supabase-schema.sql</span> (ຫຼື ກົດ “ຄັດລອກ SQL ສ້າງຕາຕະລາງ” ຂ້າງເທິງ) → Run</li>
+      <li>ເປີດ <b>Project Settings → API</b> ຄັດລອກ <b>Project URL</b> ແລະ <b>anon (publishable) key</b></li>
+      <li>ວາງທັງສອງຂ້າງເທິງ ແລ້ວກົດ “ບັນທຶກ ແລະ ເຊື່ອມຕໍ່”</li>
+      <li>ຖ້າມີຂໍ້ມູນຢູ່ SQLite ແລ້ວ ໃຫ້ຍ້າຍດ້ວຍ <span class="code">python tools/migrate_to_supabase.py</span> (ເບິ່ງ README)</li>
+    </ol>
+    <p class="db-note mt-14">ໝາຍເຫດ: ໃຊ້ <b>anon / publishable key</b> ເທົ່ານັ້ນ — ຢ່າວາງ <span class="code">service_role</span> key ໃນເບົາຣ໌ເຊີ. ຕາຕະລາງເປີດ RLS ແລະ ອະນຸຍາດໃຫ້ເຂົ້າເຖິງຜ່ານຟັງຊັນ <span class="code">apt_load / apt_save</span> ເທົ່ານັ້ນ ດັ່ງນັ້ນຢ່າເຜີຍແຜ່ໜ້າເວັບນີ້ສູ່ສາທາລະນະ (ໃຜມີ URL + key ຈະເຂົ້າເຖິງຂໍ້ມູນໄດ້).</p>
+  </section>
+</main>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/db.config.js"></script>
+<script src="assets/db.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const $ = (id) => document.getElementById(id);
+
+  function note(el, text, bad) {
+    el.textContent = text;
+    el.style.color = bad ? "var(--danger)" : "var(--ok)";
+  }
+
+  function fill() {
+    const c = DB.cfg();
+    $("dbUrl").value = c.url || "";
+    $("dbToken").value = c.token || "";
+  }
+
+  function paint() {
+    const s = DB.state;
+    const server = s.mode === "server";
+    const cloud = s.mode === "cloud";
+    $("stMode").textContent =
+      s.mode === "supabase"
+        ? "Supabase (PostgreSQL)"
+        : server
+          ? "SQLite · server.py"
+          : cloud
+            ? "Turso (ຄລາວ)"
+            : "ເບົາຣ໌ເຊີ (ທ້ອງຖິ່ນ)";
+    $("stConn").textContent = s.mode === "local" ? "ຍັງບໍ່ໄດ້ເຊື່ອມຕໍ່" : s.connected ? "ເຊື່ອມຕໍ່ແລ້ວ" : "ບໍ່ສຳເລັດ";
+    $("stConn").style.color = s.mode !== "local" && s.connected ? "var(--ok)" : "var(--amber)";
+    $("stEndpoint").textContent = server
+      ? "/api/state · data/apartment.db"
+      : DB.isConfigured()
+        ? DB.endpoint().replace("/v2/pipeline", "").replace("/rest/v1", "")
+        : "—";
+    $("stRooms").textContent = s.counts.rooms;
+    $("stTenants").textContent = s.counts.tenants;
+    $("stInvoices").textContent = s.counts.invoices;
+    $("stUpdated").textContent = s.updatedAt ? new Date(s.updatedAt).toLocaleString("en-GB") : "—";
+    $("dbSchema").disabled = !((cloud || s.mode === "supabase") && s.connected);
+    $("dbSchema").textContent = DB.isSupabase() ? "ຄັດລອກ SQL ສ້າງຕາຕະລາງ" : "ສ້າງຕາຕະລາງ";
+    $("dbSeed").disabled = !((cloud || s.mode === "supabase") && s.connected);
+    if (s.error) note($("dbNote2"), s.error, true);
+    DB.paintStatus();
+  }
+
+  fill();
+  DB.ready.then(paint);
+
+  $("dbSave").addEventListener("click", () => {
+    const url = $("dbUrl").value.trim();
+    const token = $("dbToken").value.trim();
+    if (!url || !token) return note($("dbNote"), "ກະລຸນາປ້ອນ URL ແລະ token ກ່ອນ", true);
+    DB.setConfig(url, token);
+    note($("dbNote"), "ບັນທຶກແລ້ວ — ກຳລັງໂຫຼດຄືນ...", false);
+    setTimeout(() => location.reload(), 500);
+  });
+
+  $("dbTest").addEventListener("click", async () => {
+    const url = $("dbUrl").value.trim();
+    const token = $("dbToken").value.trim();
+    if (!url || !token) return note($("dbNote"), "ກະລຸນາປ້ອນ URL ແລະ token ກ່ອນ", true);
+    const prev = DB.cfg();
+    DB.setConfig(url, token);
+    note($("dbNote"), "ກຳລັງທົດສອບ...", false);
+    try {
+      await DB.test();
+      note($("dbNote"), "ເຊື່ອມຕໍ່ສຳເລັດ — ກົດ “ບັນທຶກ ແລະ ເຊື່ອມຕໍ່” ເພື່ອໃຊ້ງານ", false);
+    } catch (e) {
+      DB.setConfig(prev.url, prev.token);
+      note($("dbNote"), e.message, true);
+    }
+  });
+
+  $("dbClear").addEventListener("click", () => {
+    openConfirm(
+      "ຍົກເລີກການເຊື່ອມຕໍ່?",
+      "URL ແລະ token ຈະຖືກລຶບອອກຈາກເຄື່ອງນີ້ ແລ້ວກັບໄປໃຊ້ເບົາຣ໌ເຊີ.",
+      () => {
+        DB.clearConfig();
+        location.reload();
+      },
+      { okText: "ຕົກລົງ", danger: false }
+    );
+  });
+
+  $("dbSchema").addEventListener("click", async () => {
+    if (DB.isSupabase()) {
+      // Supabase: ສ້າງຕາຕະລາງຈາກ client ບໍ່ໄດ້ — ຄັດລອກ SQL ໃຫ້ໄປວາງໃນ SQL Editor
+      try {
+        const sql = await (await fetch("db/supabase-schema.sql", { cache: "no-store" })).text();
+        await navigator.clipboard.writeText(sql);
+        note($("dbNote2"), "ຄັດລອກ SQL ແລ້ວ — ໄປວາງໃນ Supabase → SQL Editor → Run", false);
+      } catch (e) {
+        note($("dbNote2"), "ຄັດລອກອັດຕະໂນມັດບໍ່ໄດ້ — ເປີດໄຟລ໌ db/supabase-schema.sql ແລ້ວຄັດລອກເອງ", true);
+      }
+      return;
+    }
+    try {
+      await DB.ensureSchema();
+      note($("dbNote2"), "ສ້າງຕາຕະລາງແລ້ວ — ກົດ “ອັບໂຫຼດຂໍ້ມູນເຂົ້າຖານ” ເພື່ອເລີ່ມໃຊ້", false);
+    } catch (e) {
+      note($("dbNote2"), e.message, true);
+    }
+  });
+
+  $("dbSeed").addEventListener("click", async () => {
+    try {
+      note($("dbNote2"), "ກຳລັງອັບໂຫຼດ...", false);
+      await DB.seed();
+      note($("dbNote2"), "ອັບໂຫຼດຂໍ້ມູນສຳເລັດ — ກຳລັງໂຫຼດຄືນ...", false);
+      setTimeout(() => location.reload(), 800);
+    } catch (e) {
+      note($("dbNote2"), e.message, true);
+    }
+  });
+});
+</script>
+</body>
+</html>

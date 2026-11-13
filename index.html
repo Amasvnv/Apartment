@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>ພາບລວມ — ລະບົບຈັດການອາພາດເມັນ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Noto+Serif+Lao:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="overview">
+<main class="page-wrap">
+
+  <div class="page-head">
+    <div>
+      <h1>ສະບາຍດີ, ຜູ້ຈັດການ</h1>
+    </div>
+    <div class="head-actions">
+      <div class="pill-group" id="monthSwitch"></div>
+    </div>
+  </div>
+
+  <!-- ລາຍລະອຽດຄ່າໃຊ້ຈ່າຍ ແຍກເປັນການ໌ດລະລາຍການ ຂອງເດືອນທີ່ເລືອກ -->
+  <div class="cost-band">
+    <div class="cost-row" id="costDetail"></div>
+  </div>
+
+  <div class="overview-top">
+    <section class="hero">
+      <span class="hero-icon">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M18 12h.01"/></svg>
+      </span>
+      <div class="hero-label">ລາຍຮັບລວມ · <span id="heroMonth">ພະຈິກ 2026</span></div>
+      <div class="hero-value" id="heroTotal">0 ₭</div>
+      <div class="hero-meta">
+        <span class="trend" id="heroTrend">—</span>
+        <span class="hint" id="heroCmp">ເມື່ອທຽບກັບ <span id="heroPrevMonth">ປີ 2025</span></span>
+      </div>
+      <div class="hero-boxes">
+        <div class="hero-box"><span>ເກັບໄດ້ແລ້ວ</span><strong id="heroPaid">0 ₭</strong></div>
+        <div class="hero-box"><span>ຍັງຄ້າງຊຳລະ</span><strong id="heroUnpaid">0 ₭</strong></div>
+      </div>
+      <div class="hero-progress">
+        <div class="hp-top"><span>ອັດຕາເກັບເງິນໄດ້</span><span id="heroRate">0%</span></div>
+        <div class="progress"><i id="heroBar" style="width:0%"></i></div>
+      </div>
+    </section>
+
+    <div class="stat-grid grid-2" id="overviewStats"></div>
+  </div>
+
+  <div class="overview-year" id="yearUsage"></div>
+
+  <div class="overview-mid">
+    <section class="card card-pad">
+      <div class="card-head">
+        <div>
+          <h2>ລາຍຮັບ 1 ປີ · <span id="revYear">2026</span></h2>
+          <p class="card-sub" id="revSub">ລວມຄ່າເຊົ່າ, ຄ່າໄຟຟ້າ, ຄ່ານ້ຳ ແລະ ຄ່າບໍລິການ</p>
+        </div>
+        <a class="link-more" href="reports.html">ເບິ່ງລາຍງານ
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+      <div id="revenueChart"></div>
+    </section>
+
+    <section class="card card-pad">
+      <div class="card-head">
+        <div>
+          <h2>ໂຄງສ້າງລາຍຮັບ</h2>
+          <p class="card-sub" id="breakdownSub">ແຍກຕາມປະເພດ ປະຈຳ ພະຈິກ 2026</p>
+        </div>
+      </div>
+      <div class="donut-split">
+        <div id="donutBox"></div>
+        <div class="legend" id="donutLegend"></div>
+      </div>
+    </section>
+  </div>
+
+
+</main>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/db.config.js"></script>
+<script src="assets/db.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const state = { ...APT.current };
+
+  /* ເດືອນທີ່ມີໃບບີນຫຼ້າສຸດ — ໃຊ້ເປັນເດືອນເລີ່ມຕົ້ນ ຖ້າເດືອນປັດຈຸບັນຍັງບໍ່ມີໃບ */
+  const monthIdx = (k) => {
+    const [y, m] = k.split("-").map(Number);
+    return y * 12 + m;
+  };
+  function latestInvoiceMonth() {
+    const keys = Object.keys(INVOICE_MONTHS || {}).filter((k) => (INVOICE_MONTHS[k] || []).length);
+    if (!keys.length) return null;
+    keys.sort((a, b) => monthIdx(a) - monthIdx(b));
+    const [y, m] = keys[keys.length - 1].split("-").map(Number);
+    return { year: y, month: m };
+  }
+  /* ເດືອນເກົ່າສຸດທີ່ມີຂໍ້ມູນ (ໃບບີນ / ເລກມິເຕີ / ອັດຕາ) — ເພື່ອໃຫ້ກົດກັບໄດ້ */
+  function earliestDataMonth() {
+    const keys = new Set();
+    Object.keys(INVOICE_MONTHS || {}).forEach((k) => {
+      if ((INVOICE_MONTHS[k] || []).length) keys.add(k);
+    });
+    Object.values(APT.meterReadings || {}).forEach((map) =>
+      Object.keys(map || {}).forEach((k) => {
+        if (map[k] != null) keys.add(k);
+      })
+    );
+    Object.keys(APT.ratesByMonth || {}).forEach((k) => keys.add(k));
+    const sorted = [...keys].filter((k) => /^\d{4}-\d{1,2}$/.test(k)).sort((a, b) => monthIdx(a) - monthIdx(b));
+    if (!sorted.length) return null;
+    const [y, m] = sorted[0].split("-").map(Number);
+    return { year: y, month: m };
+  }
+
+  function stat(label, value, foot, iconName, tone) {
+    return `<div class="stat">
+      <span class="stat-icon ${tone || ""}">${icon(iconName, 16)}</span>
+      <div class="stat-label">${label}</div>
+      <div class="stat-value">${value}</div>
+      <div class="stat-foot">${foot}</div>
+    </div>`;
+  }
+
+  /* ຍອດລວມຕະຫຼອດປີ + ລາຍເດືອນ ຂອງເດືອນທີ່ເລືອກ (ໄຟຟ້າ / ນ້ຳປະປາ / ຄ່າຂີ້ເຫຍື້ອ) */
+  function yearTotals(y) {
+    const kwhBy = [], m3By = [], trashBy = [], waterBy = [];
+    let kwh = 0, m3 = 0, trash = 0, elecCost = 0, waterCost = 0, months = 0, rooms = 0;
+    for (let mm = 1; mm <= 12; mm++) {
+      const list = monthInvoices(mm, y);
+      if (!list.length) {
+        kwhBy.push(null);
+        m3By.push(null);
+        trashBy.push(null);
+        waterBy.push(null);
+        continue;
+      }
+      months++;
+      const rt = ratesForMonth(y, mm);
+      let mk = 0, mw = 0, mt = 0, mwc = 0;
+      list.forEach((i) => {
+        const k = Number(i.kwh) || 0;
+        mk += k;
+        mw += Number(i.m3) || 0;
+        elecCost += k * rt.electricRate;
+        const wc = waterCostFor(i.room, rt);
+        waterCost += wc;
+        mwc += wc;
+        mt += trashCostFor(i.room, rt);
+      });
+      kwh += mk;
+      m3 += mw;
+      trash += mt;
+      rooms += list.length;
+      kwhBy.push(mk);
+      m3By.push(mw);
+      trashBy.push(mt);
+      waterBy.push(mwc);
+    }
+    return { kwh, m3, trash, elecCost, waterCost, months, rooms, kwhBy, m3By, trashBy, waterBy };
+  }
+
+  let sparkSeq = 0;
+  /* ເສັ້ນກຣາຟ 12 ເດືອນ — ເດືອນທີ່ຍັງບໍ່ມີໃບບີນ (null) ຈະບໍ່ມີຈຸດ */
+  function yearSpark(values, color, label = "", height = 78) {
+    const W = 300, H = height, padL = 6, padR = 6, padT = 10, padB = 18;
+    const known = values.map((v, i) => (v == null ? null : { i, v })).filter(Boolean);
+    const top = (known.length ? Math.max(...known.map((k) => k.v)) : 0) * 1.18 || 1;
+    const x = (i) => padL + (i * (W - padL - padR)) / 11;
+    const y = (v) => padT + (1 - v / top) * (H - padT - padB);
+    const id = "ys" + ++sparkSeq;
+
+    const pts = known.map((k) => [x(k.i), y(k.v)]);
+    const line = pts.length > 1
+      ? `<path d="${pts.map((p, k) => `${k ? "L" : "M"} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ")}"
+          fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
+      : "";
+    const area = pts.length > 1
+      ? `<path d="${pts.map((p, k) => `${k ? "L" : "M"} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ")}
+          L ${pts[pts.length - 1][0].toFixed(1)} ${H - padB} L ${pts[0][0].toFixed(1)} ${H - padB} Z" fill="url(#${id})"/>`
+      : "";
+    const drops = pts
+      .map((p) => `<line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${p[0].toFixed(1)}" y2="${H - padB}" stroke="${color}" stroke-width="1" stroke-dasharray="2 3" opacity="0.45"/>`)
+      .join("");
+    const dots = pts
+      .map((p) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.8" fill="${color}"/>`)
+      .join("");
+    const solo = pts.length === 1 && label
+      ? `<text class="axis-text" x="${pts[0][0].toFixed(1)}" y="${(pts[0][1] - 8).toFixed(1)}" text-anchor="middle">${label}</text>`
+      : "";
+    const ticks = values
+      .map((v, i) => `<text class="axis-text" x="${x(i)}" y="${H - 5}" text-anchor="middle"${v == null ? ' opacity="0.45"' : ""}>${i + 1}</text>`)
+      .join("");
+
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px">
+      <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.26"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient></defs>
+      <line class="grid-line" x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}"/>
+      ${area}${line}${drops}${dots}${solo}${ticks}
+    </svg>`;
+  }
+
+  function renderYearUsage(m, y) {
+    const yt = yearTotals(y);
+    const per = yt.months || 1;
+    const cards = [
+      {
+        cc: "#6A5ACD",
+        ico: "zap",
+        label: "ການໃຊ້ໄຟຟ້າ 1 ປີ",
+        value: `${num(yt.kwh)} <small>kWh</small>`,
+        note: `ສະເລ່ຍ ${num(Math.round(yt.kwh / per))} kWh/ເດືອນ · ຄ່າໄຟ ${money(yt.elecCost)}`,
+        series: yt.kwhBy
+      },
+      {
+        cc: "var(--cyan)",
+        ico: "droplet",
+        label: "ຄ່ານ້ຳປະປາ 1 ປີ",
+        value: money(yt.waterCost),
+        note: `ສະເລ່ຍ ${money(Math.round(yt.waterCost / per))}/ເດືອນ · ${yt.months} ເດືອນທີ່ມີໃບບີນ`,
+        series: yt.waterBy
+      },
+      {
+        cc: "#FFA500",
+        ico: "trash",
+        label: "ເສຍຄ່າຂີ້ເຫຍື້ອ 1 ປີ",
+        value: money(yt.trash),
+        note: `${yt.months} ເດືອນທີ່ມີໃບບີນ · ສະເລ່ຍ ${money(Math.round(yt.trash / per))}/ເດືອນ`,
+        series: yt.trashBy
+      }
+    ];
+    /* ການ์ດລວມ — ຄ່າໄຟຟ້າ + ຄ່ານ້ຳປະປາ + ຄ່າຂີ້ເຫຍື້ອ ຂອງປີ */
+    const spendTotal = yt.elecCost + yt.waterCost + yt.trash;
+    const pctOf = (v) => (spendTotal ? (v / spendTotal) * 100 : 0);
+    const summaryCard = `<div class="year-card" style="--cc:var(--violet)">
+        <div class="yc-top">
+          <span class="yc-ico">${icon("wallet", 15)}</span>
+          <div class="yc-body">
+            <div class="yc-label">ລວມຄ່າໃຊ້ຈ່າຍທັງໝົດ</div>
+            <div class="yc-value">${money(spendTotal)}</div>
+          </div>
+        </div>
+        <div class="yc-note">ສະເລ່ຍ ${money(Math.round(spendTotal / per))}/ເດືອນ · ${yt.months} ເດືອນທີ່ມີໃບບີນ</div>
+        <div class="yc-stack">
+          <i style="width:${pctOf(yt.elecCost)}%;background:#6A5ACD"></i>
+          <i style="width:${pctOf(yt.waterCost)}%;background:#1E90FF"></i>
+          <i style="width:${pctOf(yt.trash)}%;background:#FFA500"></i>
+        </div>
+        <div class="yc-rows">
+          <div class="yc-row"><span class="yc-dot" style="--dc:#6A5ACD"></span><span class="yc-name">ໄຟຟ້າ · ${num(yt.kwh)} kWh</span><b>${money(yt.elecCost)}</b></div>
+          <div class="yc-row"><span class="yc-dot" style="--dc:#1E90FF"></span><span class="yc-name">ນ້ຳປະປາ</span><b>${money(yt.waterCost)}</b></div>
+          <div class="yc-row"><span class="yc-dot" style="--dc:#FFA500"></span><span class="yc-name">ຂີ້ເຫຍື້ອ</span><b>${money(yt.trash)}</b></div>
+        </div>
+      </div>`;
+
+    document.getElementById("yearUsage").innerHTML = cards
+      .map(
+        (c) => `<div class="year-card" style="--cc:${c.cc}">
+        <div class="yc-top">
+          <span class="yc-ico">${icon(c.ico, 15)}</span>
+          <div class="yc-body">
+            <div class="yc-label">${c.label}</div>
+            <div class="yc-value">${c.value}</div>
+          </div>
+        </div>
+        <div class="yc-note">${c.note}</div>
+        <div class="yc-chart">${yearSpark(
+          c.series,
+          c.cc,
+          c.series.filter((v) => v != null).length === 1 ? shortMonth(c.series.findIndex((v) => v != null) + 1, y) : ""
+        )}</div>
+      </div>`
+      )
+      .join("") + summaryCard;
+  }
+
+  function renderStats(m, y) {
+    const list = monthInvoices(m, y);
+    const st = invoiceStats(list);
+    const occupied = ROOMS.filter((r) => r.status === "occupied").length;
+    const pending = pendingRooms(m, y).length;
+    /* ຄ່າບໍລິການເພີ່ມເຕີມຂອງເດືອນທີ່ເລືອກ */
+    const extraTotal = list.reduce((s, i) => s + extraFeesShareFor(i.room, i.year, i.month), 0);
+    const totalRooms = ROOMS.length;
+    const rate = Math.round((occupied / totalRooms) * 100);
+
+    document.getElementById("overviewStats").innerHTML = [
+      `<div class="stat stat-accent" style="--sc:var(--primary)">
+        <span class="stat-icon">${icon("door", 16)}</span>
+        <div class="stat-label">ຫ້ອງທີ່ມີຜູ້ເຊົ່າ</div>
+        <div class="stat-value">${occupied}/${totalRooms}</div>
+        <div class="mini-bar"><i style="width:${rate}%"></i></div>
+        <div class="stat-foot">ອັດຕາການເຊົ່າ <b>${rate}%</b></div>
+      </div>`,
+
+      `<div class="stat stat-accent" style="--sc:var(--violet)">
+        <span class="stat-icon violet">${icon("wallet", 16)}</span>
+        <div class="stat-label">ຄ່າບໍລິການເພີ່ມເຕີມ</div>
+        <div class="stat-value">${money(extraTotal)}</div>
+        <div class="stat-foot">${money(otherFeesTotal(y, m))} ÷ ${residentRoomCount()} ຫ້ອງ</div>
+      </div>`,
+      `<div class="stat stat-accent" style="--sc:var(--cyan)">
+        <span class="stat-icon cyan">${icon("clock", 16)}</span>
+        <div class="stat-label">ລໍຖ້າຈົດມິເຕີ</div>
+        <div class="stat-value">${pending}</div>
+        <div class="stat-foot">ປະຈຳ ${monthLabel(m, y)}</div>
+      </div>`,
+      `<div class="stat stat-accent" style="--sc:var(--danger)">
+        <span class="stat-icon danger">${icon("receipt", 16)}</span>
+        <div class="stat-label">ໃບບີນເກັບເງີນຄ້າງ</div>
+        <div class="stat-value">${st.unpaidCount}</div>
+        <div class="stat-foot">${st.unpaid ? (st.unpaid / 1000000).toFixed(1) + " ລ້ານ ກີບ" : "ບໍ່ມີຍອດຄ້າງ"}</div>
+      </div>`
+    ].join("");
+
+    // hero — ລາຍຮັບລວມ 1 ປີ (ທຸກເດືອນຂອງປີທີ່ເລືອກ)
+    const yearList = (yy) => {
+      const out = [];
+      for (let mm = 1; mm <= 12; mm++) out.push(...monthInvoices(mm, yy));
+      return out;
+    };
+    const ySt = invoiceStats(yearList(y));
+    const prevYearTotal = invoiceStats(yearList(y - 1)).total;
+    const total = ySt.total;
+    const diff = prevYearTotal ? ((total - prevYearTotal) / prevYearTotal) * 100 : 0;
+
+    document.getElementById("heroMonth").textContent = `ປີ ${y}`;
+    document.getElementById("heroTotal").textContent = money(total);
+    document.getElementById("heroPaid").textContent = money(ySt.paid);
+    document.getElementById("heroUnpaid").textContent = money(ySt.unpaid);
+    document.getElementById("heroRate").textContent = ySt.rate + "%";
+    document.getElementById("heroBar").style.width = ySt.rate + "%";
+    document.getElementById("heroPrevMonth").textContent = `ປີ ${y - 1}`;
+    document.getElementById("heroCmp").style.display = prevYearTotal ? "" : "none";
+    const trend = document.getElementById("heroTrend");
+    if (prevYearTotal) {
+      const up = diff >= 0;
+      trend.innerHTML = `${icon(up ? "trendUp" : "trendDown", 12, 2.4)} ${up ? "+" : ""}${diff.toFixed(1)}%`;
+      trend.style.background = up ? "rgba(6, 60, 40, 0.34)" : "rgba(6, 31, 58, 0.34)";
+    } else {
+      trend.textContent = "ບໍ່ມີຂໍ້ມູນປຽບທຽບ";
+    }
+
+    // charts + lists
+    /* ລາຍຮັບ 1 ປີ: 12 ເດືອນຂອງປີທີ່ເລືອກ — ເດືອນທີ່ຍັງບໍ່ມີໃບບີນ = ບໍ່ມີຈຸດ */
+    const revMonths = Array.from({ length: 12 }, (_, i) => i + 1);
+    const revByMonth = revMonths.map((mm) => {
+      const ml = monthInvoices(mm, y);
+      return ml.length ? ml.reduce((s, i) => s + invoiceTotal(i), 0) : null;
+    });
+    const revCount = revByMonth.filter((v) => v != null).length;
+    document.getElementById("revYear").textContent = y;
+    document.getElementById("revSub").textContent = `ລວມຄ່າເຊົ່າ, ຄ່າໄຟຟ້າ, ຄ່ານ້ຳ ແລະ ຄ່າບໍລິການ · ມີຂໍ້ມູນ ${revCount} ເດືອນ`;
+    document.getElementById("revenueChart").innerHTML = lineChart({
+      labels: revMonths.map((mm) => MONTH_SHORT[mm - 1]),
+      values: revByMonth,
+      ticks: 4,
+      format: (v) => (v / 1000000).toFixed(0),
+      suffix: "ລ",
+      height: 296,
+      color: "#1E90FF",
+      dotColor: "#1E90FF"
+    });
+    renderYearUsage(m, y);
+
+    const rt = ratesForMonth(y, m);
+    /* ໂຄງສ້າງລາຍຮັບ 1 ປີ — ລວມທຸກໃບຂອງປີ ໂດຍໃຊ້ອັດຕາຂອງເດືອນໃນແຕ່ລະໃບ */
+    const yearListForDonut = yearList(y);
+    let rentSum = 0, elecSum = 0, waterSum = 0, trashSum = 0, repairSum = 0, serviceSum = 0, extraSum = 0;
+    yearListForDonut.forEach((i) => {
+      const irt = invoiceRates(i);
+      rentSum += i.rent;
+      elecSum += i.kwh * irt.electricRate;
+      waterSum += waterCostFor(i.room, irt);
+      trashSum += trashCostFor(i.room, irt);
+      repairSum += invoiceRepair(i);
+      serviceSum += serviceCostFor(i.room, irt);
+      extraSum += (i.other || 0) + extraFeesShareFor(i.room, i.year, i.month);
+    });
+    /* ລຳດັບຕາມທີ່ກຳນົດ: ເຊົ່າ → ໄຟ → ນ້ຳ → ຂີ້ເຫຍື້ອ → ສ້ອມແປງ → ບໍລິການສ່ວນກາງ → ເພີ່ມເຕີມ */
+    const segs = [
+      { name: "ຄ່າເຊົ່າ", value: rentSum, color: "#3d9bff" },
+      { name: "ຄ່າໄຟຟ້າ", value: elecSum, color: "#ffb454" },
+      { name: "ຄ່ານ້ຳປະປາ", value: waterSum, color: "#4fc9ff" },
+      { name: "ຄ່າຂີ້ເຫຍື້ອ", value: trashSum, color: "#8e9fb5" },
+      { name: "ສ້ອມແປງ", value: repairSum, color: "#a78bfa" },
+      { name: "ຄ່າບໍລິການສ່ວນກາງ", value: serviceSum, color: "#34d399" },
+      { name: "ຄ່າບໍລິການເພີ່ມເຕີມ", value: extraSum, color: "#f472b6" }
+    ];
+    document.getElementById("breakdownSub").textContent = `ແຍກຕາມປະເພດ ລວມທັງປີ ${y} · ${yearListForDonut.length} ໃບ`;
+    document.getElementById("donutBox").innerHTML = donutChart(segs, "ລວມ", (ySt.total / 1000000).toFixed(1) + " ລ້ານ", 150);
+    document.getElementById("donutLegend").innerHTML = segs
+      .map((s) => {
+        const pct = ySt.total ? ((s.value / ySt.total) * 100).toFixed(0) : 0;
+        return `<div class="legend-row">
+          <span class="dot" style="background:${s.color}"></span>
+          <span class="lname">${s.name}</span>
+          <span class="lval">${money(s.value)}</span>
+          <span class="lpct">${pct}%</span>
+        </div>`;
+      })
+      .join("");
+
+    /* ລາຍລະອຽດຄ່າໃຊ້ຈ່າຍທັງໝົດ — ຄິດຈາກໃບບີນແຕ່ລະໃບ ໃຫ້ກົງກັບຍອດລວມ */
+    let rentAll = 0, elecAll = 0, waterAll = 0, trashAll = 0, otherAll = 0, repairAll = 0;
+    list.forEach((i) => {
+      const irt = invoiceRates(i);
+      rentAll += i.rent;
+      elecAll += i.kwh * irt.electricRate;
+      waterAll += waterCostFor(i.room, irt);
+      trashAll += trashCostFor(i.room, irt);
+      otherAll += i.other || 0;
+      repairAll += invoiceRepair(i);
+    });
+    const detailRows = [
+      ["ຄ່າເຊົ່າ", `${list.length} ຫ້ອງ`, rentAll, "#1E90FF", "home"],
+      ["ຄ່າໄຟຟ້າ", `${num(st.kwh)} kWh × ${money(rt.electricRate)}`, elecAll, "#6A5ACD", "zap"],
+      ["ຄ່ານ້ຳປະປາ", `${money(rt.waterTotal)} ÷ ${residentPeople()} ຄົນ`, waterAll, "#00BFFF", "droplet"],
+      ["ຄ່າຂີ້ເຫຍື້ອ", `${money(rt.trashTotal || 0)} ÷ ${residentRoomCount()} ຫ້ອງ`, trashAll, "#FFA500", "trash"],
+      ["ຄ່າສ້ອມແປງ", "ລວມຄ່າຊ່ອມຕາມຫ້ອງ", repairAll, "#FF6347", "wrench"],
+    ];
+    if (otherAll) detailRows.push(["ຄ່າອື່ນໆ", "ຕາມໃບບີນແຕ່ລະຫ້ອງ", otherAll, "#1E90FF", "receipt"]);
+
+    document.getElementById("costDetail").innerHTML = list.length
+      ? detailRows
+          .map(
+            (r) => `<div class="card cost-card" style="--cc:${r[3]}">
+        <div class="cc-top">
+          <span class="cc-ico">${icon(r[4], 13, 2)}</span>
+          <span class="d-name">${r[0]}</span>
+        </div>
+        <span class="d-val">${money(r[2])}</span>
+        <span class="d-note">${r[1]}</span>
+      </div>`
+          )
+          .join("") +
+        `<div class="card cost-card is-total" style="--cc:#3CB371">
+        <div class="cc-top">
+          <span class="cc-ico">${icon("chart", 13, 2)}</span>
+          <span class="d-name">ລວມທັງໝົດ</span>
+        </div>
+        <span class="d-val">${money(st.total)}</span>
+        <span class="d-note">ຊຳລະ ${st.paidCount} · ຄ້າງ ${st.unpaidCount} ໃບ</span>
+      </div>`
+      : '<div class="empty">ຍັງບໍ່ມີຂໍ້ມູນຄ່າໃຊ້ຈ່າຍໃນເດືອນນີ້</div>';
+  }
+
+  DB.ready.then(() => {
+    /* ຖ້າເດືອນປັດຈຸບັນຍັງບໍ່ມີໃບ ໃຫ້ເປີດເດືອນທີ່ມີໃບຫຼ້າສຸດແທນ */
+    const latest = latestInvoiceMonth();
+    if (!monthInvoices(state.month, state.year).length && latest) {
+      state.month = latest.month;
+      state.year = latest.year;
+    }
+    monthSwitch(document.getElementById("monthSwitch"), {
+      start: state,
+      min: earliestDataMonth() || { year: 2026, month: 10 },
+      onChange: (s) => { state.month = s.month; state.year = s.year; renderStats(s.month, s.year); }
+    });
+    renderStats(state.month, state.year);
+  });
+  window.addEventListener("themechange", () => renderStats(state.month, state.year));
+});
+</script>
+</body>
+</html>

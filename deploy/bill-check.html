@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>ກວດເບິ່ງບີນ — ລະບົບຈັດການອາພາດເມັນ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Noto+Serif+Lao:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="billcheck">
+<main class="page-wrap">
+  <div class="page-head">
+    <div>
+      <h1>ເບິ່ງໃບບີນເກັບເງີນຂອງທ່ານ</h1>
+    </div>
+  </div>
+
+  <section class="card card-pad mt-14 bill-view">
+    <form id="billLookup" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+      <div class="field" style="flex:0 0 240px">
+        <label for="billRoom">ເລກຫ້ອງ</label>
+        <input class="input" id="billRoom" placeholder="ຕົວຢ່າງ: 1" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" type="submit">ກວດເບິ່ງບີນ</button>
+    </form>
+    <p class="bill-hint" id="billHint" hidden></p>
+    <div id="billResult"></div>
+  </section>
+</main>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/db.config.js"></script>
+<script src="assets/db.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const result = document.getElementById("billResult");
+  const input = document.getElementById("billRoom");
+  const hint = document.getElementById("billHint");
+  let room = "";
+  let monthKey = "";
+
+  const monthIdx = (key) => {
+    const [y, m] = String(key).split("-").map(Number);
+    return y * 12 + (m || 1);
+  };
+
+  /* ໃບບີນທັງໝົດຂອງຫ້ອງໜຶ່ງ ຮຽງຈາກເດືອນໃໝ່ສຸດໄປເກົ່າ */
+  function roomInvoices(roomNo) {
+    const list = [];
+    Object.keys(INVOICE_MONTHS || {}).forEach((k) => {
+      (INVOICE_MONTHS[k] || []).forEach((inv) => {
+        if (String(inv.room) === String(roomNo)) list.push(inv);
+      });
+    });
+    return list.sort((a, b) => monthIdx(invoiceMonthKey(b)) - monthIdx(invoiceMonthKey(a)));
+  }
+
+  /* ເລກມິເຕີກ່ອນ / ໃໝ່ ຂອງເດືອນໃນໃບບີນ */
+  function meterPair(inv) {
+    const key = invoiceMonthKey(inv);
+    const map = (APT.meterReadings || {})[inv.room] || {};
+    const cur = monthIdx(key);
+    const recorded = map[key] != null ? Number(map[key]) : null;
+    let prevRec = null;
+    Object.keys(map).forEach((k) => {
+      if (monthIdx(k) < cur && (!prevRec || monthIdx(k) > monthIdx(prevRec.key))) {
+        prevRec = { key: k, val: Number(map[k]) || 0 };
+      }
+    });
+    const kwh = Number(inv.kwh) || 0;
+    let prev = prevRec ? prevRec.val : null;
+    let now = recorded;
+    if (now !== null && prev === null) prev = Math.max(0, now - kwh);
+    if (now === null && prev !== null) now = prev + kwh;
+    return { prev, now };
+  }
+
+  /* ລາຍການຄ່າໃຊ້ຈ່າຍໃນໃບບີນ */
+  function invoiceLines(inv) {
+    const t = tenantOfRoom(inv.room);
+    const extras = otherFeesTotal(inv.year, inv.month);
+    const repairs = repairItemsFor(inv.room, invoiceMonthKey(inv));
+    const repair = repairs.reduce((s, x) => s + (Number(x.cost) || 0), 0);
+    const rt = invoiceRates(inv);
+    const water = waterCostFor(inv.room, rt);
+    const trash = trashCostFor(inv.room, rt);
+    const service = serviceCostFor(inv.room, rt);
+    return [
+      { k: "ຄ່າເຊົ່າ", v: inv.rent },
+      { k: `ຄ່າໄຟຟ້າ (${num(inv.kwh)} kWh × ${money(rt.electricRate)})`, v: inv.kwh * rt.electricRate },
+      {
+        k: water
+          ? `ຄ່ານ້ຳ (${money(rt.waterTotal)} ÷ ${residentPeople()} ຄົນ × ${t ? tenantPeople(t) : 0} ຄົນ)`
+          : "ຄ່ານ້ຳ (ໄປຕ່າງແຂວງ — ບໍ່ຄິດ)",
+        v: water
+      },
+      {
+        k: trash
+          ? `ຄ່າຂີ້ເຫຍື້ອ (${money(rt.trashTotal)} ÷ ${residentRoomCount()} ຫ້ອງຢູ່ປະຈຳ)`
+          : "ຄ່າຂີ້ເຫຍື້ອ (ໄປຕ່າງແຂວງ — ບໍ່ຄິດ)",
+        v: trash
+      },
+      {
+        k: repairs.length ? `ສ້ອມແປງ (${repairs.length} ລາຍການ)` : "ສ້ອມແປງ (ບໍ່ມີໃນເດືອນນີ້)",
+        v: repair,
+        sub: repairs.map((r) => ({ k: r.title, v: Number(r.cost) || 0 }))
+      },
+      {
+        k: service
+          ? `ຄ່າບໍລິການສ່ວນກາງ (${money(rt.serviceFee)} ÷ ${residentRoomCount()} ຫ້ອງຢູ່ປະຈຳ)`
+          : "ຄ່າບໍລິການສ່ວນກາງ (ຍັງບໍ່ຕັ້ງຄ່າ)",
+        v: service
+      },
+      {
+        k: extras
+          ? `ຄ່າອື່ນໆ (ລາຍການເພີ່ມເຕີມ ${money(extras)} ÷ ${residentRoomCount()} ຫ້ອງຢູ່ປະຈຳ)`
+          : "ຄ່າອື່ນໆ",
+        v: (inv.other || 0) + extraFeesShareFor(inv.room, inv.year, inv.month)
+      }
+    ];
+  }
+
+  const esc = (s) =>
+    String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  /* ໃບບີນເບິ່ງໄດ້ຢ່າງດຽວ (ບໍ່ມີປຸ່ມແກ້ໄຂ / ລຶບ) */
+  function buildBill(inv) {
+    const mp = meterPair(inv);
+    const key = invoiceMonthKey(inv);
+    const [y, m] = key.split("-").map(Number);
+    const meter = `${mp.prev === null ? "—" : num(mp.prev)} → ${mp.now === null ? "—" : num(mp.now)}`;
+    return `
+      <div class="ps-head">
+        <img class="ps-logo" src="assets/logo.png" alt="${esc(APT.name)}" onerror="this.remove()">
+        <div class="ps-head-row">
+          <div>
+            <span class="ps-apt">${esc(APT.name)}</span>
+            <span class="ps-sub">${esc(APT.address)}</span>
+          </div>
+          <div class="ps-doc">
+            <strong>ໃບບີນເກັບເງີນ ${esc(inv.no)}</strong>
+            <span>ປະຈຳ ${monthLabel(m, y)} · ກຳນົດຊຳລະ ${esc(inv.due)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="ps-info">
+        <div><span>ຫ້ອງ</span><strong>${esc(inv.room)}</strong></div>
+        <div><span>ຜູ້ເຊົ່າ</span><strong>${esc(inv.tenant)}</strong></div>
+        <div><span>ເລກມິເຕີໄຟຟ້າ</span><strong>${meter}</strong></div>
+        <div><span>ໄຊ້ໄຟຟ້າ</span><strong>${num(inv.kwh)} kWh</strong></div>
+      </div>
+      <table class="ps-lines">
+        <thead><tr><th>ລາຍການ</th><th>ຈຳນວນເງິນ</th></tr></thead>
+        <tbody>${invoiceLines(inv)
+          .flatMap((l) => {
+            const main = `<tr class="${l.sub && l.sub.length ? "ps-hassub" : ""}">
+              <td>${esc(l.k)}</td><td>${money(l.v)}</td></tr>`;
+            if (!l.sub || !l.sub.length) return [main];
+            return [
+              main,
+              ...l.sub.map(
+                (s, i) =>
+                  `<tr class="ps-sub-line${i === l.sub.length - 1 ? " last" : ""}">
+                    <td>${esc(s.k)}</td><td>${money(s.v)}</td></tr>`
+              )
+            ];
+          })
+          .join("")}</tbody>
+      </table>
+      <div class="ps-notes">
+        <div class="ps-notes-text">
+          ${monthNoteFor(y, m) ? `<div class="ps-note"><span>ແຈ້ງການປະຈຳເດືອນ</span><p>${esc(monthNoteFor(y, m))}</p></div>` : ""}
+          ${monthNote2For(y, m) ? `<div class="ps-note"><span>ແຈ້ງການເພີ່ມເຕີມ</span><p>${esc(monthNote2For(y, m))}</p></div>` : ""}
+        </div>
+        <div class="ps-qr">
+          <img class="ps-qr-img" src="assets/qr.png" alt="QR ຊຳລະເງິນ" onerror="this.closest('.ps-qr').remove()">
+          <span>ສະແກນ QR ເພື່ອຊຳລະເງິນ</span>
+        </div>
+      </div>
+      <div class="ps-total">
+        <span>ສະຖານະ · ${inv.paid ? "ຊຳລະແລ້ວ" : "ຄ້າງຊຳລະ"}</span>
+        <b>${money(invoiceTotal(inv))}</b>
+      </div>
+      <div class="ps-foot">
+        <span>${esc(APT.address)}</span>
+        <span>ອອກໃບບີນເກັບເງິນໂດຍ ${esc(APT.name)}</span>
+      </div>`;
+  }
+
+  function render() {
+    const list = room ? roomInvoices(room) : [];
+    if (!room) {
+      result.innerHTML = "";
+      return;
+    }
+    if (!list.length) {
+      result.innerHTML = `<div class="empty">ບໍ່ພົບໃບບີນຂອງຫ້ອງ “${esc(room)}”</div>`;
+      return;
+    }
+    const t = tenantOfRoom(room);
+    if (!list.some((i) => invoiceMonthKey(i) === monthKey)) monthKey = invoiceMonthKey(list[0]);
+    const inv = list.find((i) => invoiceMonthKey(i) === monthKey) || list[0];
+    const opts = list
+      .map((i) => {
+        const k = invoiceMonthKey(i);
+        const [y, m] = k.split("-").map(Number);
+        const label = `${monthLabel(m, y)} · ${money(invoiceTotal(i))} · ${i.paid ? "ຊຳລະແລ້ວ" : "ຄ້າງຊຳລະ"}`;
+        return `<option value="${k}"${k === monthKey ? " selected" : ""}>${esc(label)}</option>`;
+      })
+      .join("");
+    result.innerHTML = `
+      <div class="bill-room">
+        <h2>ຫ້ອງ ${esc(room)}${t ? " · " + esc(t.name) : ""}</h2>
+        <p class="bill-sub">ມີ ${list.length} ໃບບີນ</p>
+      </div>
+      <div class="field-grid c2">
+        <div class="field">
+          <label for="billMonth">ເດືອນ</label>
+          <select class="input" id="billMonth">${opts}</select>
+        </div>
+      </div>
+      <div class="bill-doc">
+        <div class="print-sheet">${buildBill(inv)}</div>
+      </div>`;
+    fitBillToPage(document.querySelector("#billResult .print-sheet"), "a5");
+    document.getElementById("billMonth").addEventListener("change", (e) => {
+      monthKey = e.target.value;
+      render();
+    });
+  }
+
+  document.getElementById("billLookup").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const val = input.value.trim();
+    if (!val) {
+      hint.textContent = "ກະລຸນາພິມເລກຫ້ອງຂອງທ່ານ";
+      hint.hidden = false;
+      room = "";
+      render();
+      return;
+    }
+    hint.textContent = "";
+    hint.hidden = true;
+    room = val;
+    monthKey = "";
+    render();
+  });
+
+  DB.ready
+    .then(() => {
+      /* ເປີດມາພ້ອມ ?room=1 (ແລະ ?y=&m= ຖ້າຕ້ອງການເລືອກເດືອນ) */
+      const p = new URLSearchParams(location.search);
+      const qRoom = (p.get("room") || "").trim();
+      const qy = Number(p.get("y"));
+      const qm = Number(p.get("m"));
+      if (qRoom) {
+        input.value = qRoom;
+        room = qRoom;
+        if (Number.isInteger(qy) && Number.isInteger(qm) && qm >= 1 && qm <= 12)
+          monthKey = `${qy}-${String(qm).padStart(2, "0")}`;
+        render();
+      }
+    })
+    .catch(() => {});
+});
+</script>
+</body>
+</html>

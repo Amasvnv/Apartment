@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>ຜູ້ໃຊ້ — ລະບົບຈັດການອາພາດເມັນ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Noto+Serif+Lao:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="users">
+<main class="page-wrap">
+
+  <div class="page-head">
+    <div>
+      <h1>ຜູ້ໃຊ້</h1>
+      <p class="page-sub">ກຳນົດສິດຂອງແຕ່ລະຄົນ — ໃຜເບິ່ງ, ແກ້ໄຂ ຫຼື ລຶບຂໍ້ມູນຂອງແຕ່ລະໜ້າໄດ້</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-primary" id="addUserBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>
+        ເພີ່ມຜູ້ໃຊ້
+      </button>
+    </div>
+  </div>
+
+  <section class="card card-pad mt-14">
+    <div class="table-head" style="padding:0 0 14px">
+      <div>
+        <h2>ຜູ້ໃຊ້ໃນລະບົບ</h2>
+        <div class="t-sub" id="userCount">—</div>
+      </div>
+    </div>
+    <table class="data">
+      <thead>
+        <tr>
+          <th>ຜູ້ໃຊ້</th>
+          <th style="width:120px">ບົດບາດ</th>
+          <th style="width:150px">ເບີໂທ</th>
+          <th>ສິດການເຂົ້າເຖິງ</th>
+          <th style="width:110px">ສະຖານະ</th>
+          <th style="width:120px;text-align:right">ຈັດການ</th>
+        </tr>
+      </thead>
+      <tbody id="userBody"></tbody>
+    </table>
+    <div class="formula-note">ສິດ 3 ລະດັບ: ເບິ່ງ (ເປີດເບິ່ງຂໍ້ມູນ) · ແກ້ໄຂ (ເພີ່ມ / ແກ້ໄຂ / ບັນທຶກ) · ລຶບ (ລຶບຂໍ້ມູນອອກຈາກລະບົບ) — ການປ່ຽນສິດຈະຖືກບັນທຶກລົງຖານຂໍ້ມູນທັນທີ</div>
+  </section>
+</main>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/db.config.js"></script>
+<script src="assets/db.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const MODULES = [
+    { key: "overview", label: "ພາບລວມ" },
+    { key: "meter", label: "ຈົດມິເຕີ" },
+    { key: "rooms", label: "ຫ້ອງພັກ" },
+    { key: "tenants", label: "ຜູ້ເຊົ່າ" },
+    { key: "invoices", label: "ໃບບີນເກັບເງີນ" },
+    { key: "repairs", label: "ສ້ອມແປງ" },
+    { key: "settings", label: "ຕັ້ງຄ່າອັດຕາ" },
+    { key: "users", label: "ຜູ້ໃຊ້" }
+  ];
+  const ACTIONS = [
+    { key: "view", label: "ເບິ່ງ" },
+    { key: "edit", label: "ແກ້ໄຂ" },
+    { key: "delete", label: "ລຶບ" }
+  ];
+  const ROLES = {
+    manager: { label: "ຜູ້ຈັດການ", cls: "blue" },
+    staff: { label: "ພະນັກງານ", cls: "cyan" },
+    tech: { label: "ຊ່າງ", cls: "amber" },
+    viewer: { label: "ຜູ້ເບິ່ງ", cls: "muted" }
+  };
+  const roleOf = (k) => ROLES[k] || ROLES.staff;
+  const users = () => (Array.isArray(APT.users) ? APT.users : (APT.users = []));
+
+  const initials = (name) => {
+    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "ຜ";
+    return parts.slice(0, 2).map((w) => Array.from(w)[0]).join("");
+  };
+
+  const permLabels = (u) =>
+    MODULES.filter((m) => (u.perms && u.perms[m.key] ? u.perms[m.key].length : 0)).map((m) => m.label);
+
+  function permSummary(u) {
+    const list = permLabels(u);
+    if (!list.length) return `<span class="perm-list">ຍັງບໍ່ໄດ້ໃຫ້ສິດ</span>`;
+    const shown = list.slice(0, 3).join(" · ");
+    return `<span class="perm-list"><b>${shown}</b>${
+      list.length > 3 ? ` ແລະ ອີກ ${list.length - 3} ໜ້າ` : ""
+    }</span>`;
+  }
+
+  function render() {
+    const list = users().slice().sort((a, b) => Number(b.active) - Number(a.active));
+    document.getElementById("userCount").textContent = list.length
+      ? `${list.length} ຄົນ · ໃຊ້ງານ ${list.filter((u) => u.active).length}`
+      : "ຍັງບໍ່ມີຜູ້ໃຊ້";
+    document.getElementById("userBody").innerHTML = list.length
+      ? list
+          .map((u) => {
+            const role = roleOf(u.role);
+            return `<tr>
+              <td>
+                <div class="user-cell">
+                  <span class="avatar">${initials(u.name)}</span>
+                  <span class="uc-txt"><strong>${u.name}</strong><span>${u.id || "—"}</span></span>
+                </div>
+              </td>
+              <td><span class="chip ${role.cls}">${role.label}</span></td>
+              <td class="num">${u.phone || "—"}</td>
+              <td>${permSummary(u)}</td>
+              <td>${
+                u.active
+                  ? `<span class="status occupied"><i class="sd"></i>ໃຊ້ງານ</span>`
+                  : `<span class="status vacant"><i class="sd"></i>ປິດໃຊ້</span>`
+              }</td>
+              <td>
+                <div class="row-actions">
+                  <button title="ແກ້ໄຂ ແລະ ກຳນົດສິດ" data-edit="${u.id}">${icon("edit", 13)}</button>
+                  <button class="danger" title="ລຶບຜູ້ໃຊ້" data-del="${u.id}">${icon("trash", 13)}</button>
+                </div>
+              </td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="6"><div class="empty">ຍັງບໍ່ມີຜູ້ໃຊ້ — ກົດ “ເພີ່ມຜູ້ໃຊ້” ເພື່ອເລີ່ມ</div></td></tr>`;
+
+    document.querySelectorAll("[data-edit]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const u = users().find((x) => x.id === b.dataset.edit);
+        if (u) openForm(u);
+      })
+    );
+    document.querySelectorAll("[data-del]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const u = users().find((x) => x.id === b.dataset.del);
+        if (!u) return;
+        openConfirm(
+          `ລຶບຜູ້ໃຊ້ ${u.name}?`,
+          "ຜູ້ໃຊ້ນີ້ຈະຖືກລຶບອອກພ້ອມສິດທັງໝົດ — ກູ້ຄືນບໍ່ໄດ້",
+          () => {
+            const idx = users().findIndex((x) => x.id === u.id);
+            if (idx < 0) return;
+            users().splice(idx, 1);
+            logActivity("settings", "ລຶບຜູ້ໃຊ້", `${u.name} · ${roleOf(u.role).label}`);
+            render();
+            DB.save();
+            showStatusToast("danger", "ລຶບຜູ້ໃຊ້ແລ້ວ", u.name);
+          },
+          { okText: "ລຶບຜູ້ໃຊ້", cancelText: "ຍົກເລີກ" }
+        );
+      })
+    );
+  }
+
+  function nextUserId() {
+    const max = users().reduce((m, u) => {
+      const n = Number(String(u.id || "").replace(/\D/g, ""));
+      return Number.isFinite(n) ? Math.max(m, n) : m;
+    }, 0);
+    return "U-" + String(max + 1).padStart(2, "0");
+  }
+
+  function openForm(user) {
+    const isEdit = !!user;
+    const u = user || { id: "", name: "", phone: "", role: "staff", active: true, perms: {} };
+    const roleOpts = Object.keys(ROLES)
+      .map((k) => `<option value="${k}" ${k === u.role ? "selected" : ""}>${ROLES[k].label}</option>`)
+      .join("");
+    const permRows = MODULES.map((m) => {
+      const has = u.perms && Array.isArray(u.perms[m.key]) ? u.perms[m.key] : [];
+      return `<div class="pg-row">
+        <span>${m.label}</span>
+        ${ACTIONS.map(
+          (a) =>
+            `<label><input type="checkbox" data-mod="${m.key}" data-act="${a.key}" ${
+              has.indexOf(a.key) >= 0 ? "checked" : ""
+            }></label>`
+        ).join("")}
+      </div>`;
+    }).join("");
+
+    openModal(
+      isEdit ? `ແກ້ໄຂຜູ້ໃຊ້ · ${u.name}` : "ເພີ່ມຜູ້ໃຊ້ໃໝ່",
+      isEdit ? "ປັບຂໍ້ມູນຜູ້ໃຊ້ ແລະ ສິດການໃຊ້ງານ" : "ບັນທຶກຜູ້ໃຊ້ ແລະ ກຳນົດສິດ",
+      `<div class="m-grid">
+        <div class="field full"><label>ຊື່ ແລະ ນາມສະກຸນ</label><input class="input" id="uName" value="${u.name || ""}" placeholder="ຊື່ຜູ້ໃຊ້"></div>
+        <div class="field"><label>ເບີໂທ</label><input class="input" id="uPhone" value="${u.phone || ""}" placeholder="020 …"></div>
+        <div class="field"><label>PIN ເຂົ້າລະບົບ (4–6 ໂຕເລກ)</label><input class="input" id="uPin" inputmode="numeric" maxlength="6" value="${u.pin || ""}" placeholder="1234"></div>
+        <div class="field"><label>ບົດບາດ</label><select class="input" id="uRole">${roleOpts}</select></div>
+        <div class="field"><label>ສະຖານະ</label><select class="input" id="uActive">
+          <option value="1" ${u.active ? "selected" : ""}>ໃຊ້ງານ</option>
+          <option value="0" ${u.active ? "" : "selected"}>ປິດໃຊ້</option>
+        </select></div>
+        <div class="field full">
+          <label>ສິດການເຂົ້າເຖິງ ແລະ ການແກ້ໄຂ</label>
+          <div class="perm-grid">
+            <div class="pg-head"><span>ໜ້າ</span>${ACTIONS.map((a) => `<span>${a.label}</span>`).join("")}</div>
+            ${permRows}
+          </div>
+        </div>
+      </div>`,
+      (back) => {
+        const name = back.querySelector("#uName").value.trim();
+        if (!name) {
+          back.querySelector("#uName").style.borderColor = "var(--danger)";
+          return false;
+        }
+        const perms = {};
+        back.querySelectorAll("[data-mod]").forEach((c) => {
+          if (!c.checked) return;
+          const m = c.dataset.mod;
+          (perms[m] || (perms[m] = [])).push(c.dataset.act);
+        });
+        const pin = back.querySelector("#uPin").value.replace(/\D/g, "");
+        if (pin && pin.length < 4) {
+          back.querySelector("#uPin").style.borderColor = "var(--danger)";
+          return false;
+        }
+        const role = back.querySelector("#uRole").value;
+        /* ຜູ້ເບິ່ງ: ບັງຄັບສິດໃຫ້ເບິ່ງຢ່າງດຽວທຸກໜ້າ */
+        if (role === "viewer") {
+          Object.keys(perms).forEach((k) => delete perms[k]);
+          MODULES.forEach((m) => (perms[m.key] = ["view"]));
+        }
+        const data = {
+          id: isEdit ? u.id : nextUserId(),
+          name,
+          phone: back.querySelector("#uPhone").value.trim(),
+          pin,
+          role,
+          active: back.querySelector("#uActive").value === "1",
+          perms
+        };
+        if (isEdit) Object.assign(u, data);
+        else users().push(data);
+        logActivity(
+          "settings",
+          isEdit ? "ແກ້ໄຂຜູ້ໃຊ້" : "ເພີ່ມຜູ້ໃຊ້",
+          `${data.name} · ${roleOf(data.role).label} · ${
+            MODULES.filter((m) => perms[m.key]).length
+          } ໜ້າ`
+        );
+        render();
+        DB.save();
+        showStatusToast("ok", isEdit ? "ອັບເດດຜູ້ໃຊ້ແລ້ວ" : "ເພີ່ມຜູ້ໃຊ້ແລ້ວ", `${data.name} · ${roleOf(data.role).label}`);
+      }
+    );
+
+    /* ເລືອກບົດບາດ “ຜູ້ເບິ່ງ” → ຕິກສິດ “ເບິ່ງ” ຢ່າງດຽວ ແລະ ປິດຊ່ອງ ແກ້ໄຂ/ລຶບ */
+    const roleSel = document.querySelector("#modalBackdrop #uRole");
+    if (roleSel) {
+      const syncPerms = () => {
+        const viewOnly = roleSel.value === "viewer";
+        document.querySelectorAll("#modalBackdrop [data-mod]").forEach((c) => {
+          if (!viewOnly) {
+            c.disabled = false;
+            return;
+          }
+          if (c.dataset.act === "view") c.checked = true;
+          else c.checked = false;
+          c.disabled = true;
+        });
+      };
+      roleSel.addEventListener("change", syncPerms);
+      syncPerms();
+    }
+  }
+
+  document.getElementById("addUserBtn").addEventListener("click", () => openForm(null));
+
+  DB.ready.then(render);
+});
+</script>
+</body>
+</html>

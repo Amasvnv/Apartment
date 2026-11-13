@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>ລາຍງານ — ລະບົບຈັດການອາພາດເມັນ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Noto+Serif+Lao:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="reports">
+<main class="page-wrap">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">ລາຍງານ</p>
+      <h1>ສະຖິຕິການໃຊ້ມິເຕີ ແລະ ລາຍຮັບ</h1>
+      <p class="page-sub" id="rateSub">ຄ່າໄຟ 1,900 ₭/kWh · ຄ່ານ້ຳ 4,500 ₭/ມ³</p>
+    </div>
+    <div class="head-actions">
+      <div class="pill-group" id="monthSwitch"></div>
+    </div>
+  </div>
+
+  <div class="stat-grid grid-4" id="reportStats"></div>
+
+  <div class="chart-grid mt-14">
+    <section class="card card-pad">
+      <div class="card-head">
+        <div>
+          <h2>ການໃຊ້ໄຟຟ້າ 6 ເດືອນ</h2>
+          <p class="card-sub" id="elecAvg"></p>
+        </div>
+      </div>
+      <div id="elecChart"></div>
+    </section>
+    <section class="card card-pad">
+      <div class="card-head">
+        <div>
+          <h2>ການໃຊ້ນ້ຳປະປາ 6 ເດືອນ</h2>
+          <p class="card-sub" id="waterAvg"></p>
+        </div>
+      </div>
+      <div id="waterChart"></div>
+    </section>
+  </div>
+
+  <div class="report-grid mt-14">
+    <section class="card card-pad">
+      <div class="card-head">
+        <div>
+          <h2>ລາຍຮັບແຍກຕາມປະເພດ</h2>
+          <p class="card-sub" id="typeSub">ໜ່ວຍ: ລ້ານກີບ</p>
+        </div>
+        <div class="chart-legend">
+          <span><i style="background:#3d9bff"></i>ຄ່າເຊົ່າ</span>
+          <span><i style="background:#ffb454"></i>ໄຟຟ້າ</span>
+          <span><i style="background:#4fc9ff"></i>ນ້ຳ</span>
+        </div>
+      </div>
+      <div id="typeChart"></div>
+    </section>
+
+    <section class="card card-pad">
+      <div class="card-head">
+        <div>
+          <h2>ຍອດຄ້າງຊຳລະ</h2>
+          <p class="card-sub" id="debtSub">4 ໃບທີ່ຍັງຄ້າງຊຳລະ</p>
+        </div>
+      </div>
+      <div id="debtList"></div>
+      <div class="due-summary" id="dueSummary"></div>
+    </section>
+  </div>
+
+  <section class="card card-pad mt-14">
+    <div class="card-head">
+      <div>
+        <h2>ຫ້ອງທີ່ມີຍອດຄ້າງສູງສຸດ</h2>
+        <p class="card-sub" id="topSub">ສັດສ່ວນຂອງຍອດຄ້າງ ປະຈຳ ພະຈິກ 2026</p>
+      </div>
+    </div>
+    <div id="topDebtList"></div>
+  </section>
+</main>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/db.config.js"></script>
+<script src="assets/db.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  let state = { ...APT.current };
+
+  function render() {
+    const rt = ratesForMonth(state.year, state.month);
+    const rateEl = document.getElementById("rateSub");
+    if (rateEl) {
+      rateEl.textContent = `ຄ່າໄຟ ${money(rt.electricRate)}/kWh · ຄ່ານ້ຳລວມ ${money(rt.waterTotal)}/ເດືອນ`;
+    }
+    const list = monthInvoices(state.month, state.year);
+    const st = invoiceStats(list);
+    const occupied = ROOMS.filter((r) => r.status === "occupied").length;
+    const totalRooms = ROOMS.length;
+    const occRate = Math.round((occupied / totalRooms) * 100);
+
+    document.getElementById("reportStats").innerHTML = `
+      <div class="stat hero-stat">
+        <span class="stat-icon amber">${icon("zap", 17)}</span>
+        <div class="stat-label">ໄຟຟ້າທັງໝົດ</div>
+        <div class="stat-value">${num(st.kwh)} <small>kWh</small></div>
+        <div class="stat-foot">ຄ່າໄຟ ${money(st.kwh * rt.electricRate)}</div>
+      </div>
+      <div class="stat hero-stat">
+        <span class="stat-icon cyan">${icon("droplet", 17)}</span>
+        <div class="stat-label">ນ້ຳປະປາທັງໝົດ</div>
+        <div class="stat-value">${num(st.m3)} <small>ມ³</small></div>
+        <div class="stat-foot">ຄ່ານ້ຳ ${money(list.reduce((s, i) => s + waterCostFor(i.room, rt), 0))} (ຫານ ${residentPeople()} ຄົນ)</div>
+      </div>
+      <div class="stat hero-stat">
+        <span class="stat-icon">${icon("wallet", 17)}</span>
+        <div class="stat-label">ລາຍຮັບລວມ</div>
+        <div class="stat-value">${(st.total / 1000000).toFixed(1)} <small>ລ້ານ ₭</small></div>
+        <div class="stat-foot">${list.length} ໃບໃນເດືອນນີ້</div>
+      </div>
+      <div class="stat hero-stat">
+        <span class="stat-icon violet">${icon("building", 17)}</span>
+        <div class="stat-label">ອັດຕາການເຊົ່າ</div>
+        <div class="stat-value">${occRate}%</div>
+        <div class="mini-bar"><i style="width:${occRate}%"></i></div>
+        <div class="stat-foot">${occupied}/${totalRooms} ຫ້ອງ · ${TENANTS.length} ຜູ້ເຊົ່າ</div>
+      </div>`;
+
+    // 6 ເດືອນ
+    const elecAvg = Math.round(ELEC_SERIES.reduce((s, x) => s + x.value, 0) / ELEC_SERIES.length);
+    const waterAvg = Math.round(WATER_SERIES.reduce((s, x) => s + x.value, 0) / WATER_SERIES.length);
+    document.getElementById("elecAvg").textContent = `ສະເລ່ຍ ${num(elecAvg)} kWh ຕໍ່ເດືອນ`;
+    document.getElementById("waterAvg").textContent = `ສະເລ່ຍ ${num(waterAvg)} ມ³ ຕໍ່ເດືອນ`;
+
+    document.getElementById("elecChart").innerHTML = barChart({
+      labels: ELEC_SERIES.map((s) => shortMonth(s.month, s.year)),
+      values: ELEC_SERIES.map((s) => s.value),
+      max: 1400,
+      ticks: 4,
+      format: (v) => num(v),
+      height: 232
+    });
+
+    document.getElementById("waterChart").innerHTML = lineChart({
+      labels: WATER_SERIES.map((s) => shortMonth(s.month, s.year)),
+      values: WATER_SERIES.map((s) => s.value),
+      max: 120,
+      ticks: 4,
+      format: (v) => num(v),
+      height: 232
+    });
+
+    document.getElementById("typeSub").textContent = `ໜ່ວຍ: ລ້ານກີບ · ${monthLabel(state.month, state.year)}`;
+    document.getElementById("typeChart").innerHTML = groupChart({
+      labels: REVENUE_SERIES.map((s) => shortMonth(s.month, s.year)),
+      series: [
+        { values: REVENUE_SERIES.map((s) => s.rent), color: "#3d9bff" },
+        { values: REVENUE_SERIES.map((s) => s.elec), color: "#ffb454" },
+        { values: REVENUE_SERIES.map((s) => s.water), color: "#4fc9ff" }
+      ],
+      max: 16000000,
+      ticks: 4,
+      format: (v) => (v / 1000000).toFixed(0),
+      suffix: "ລ",
+      height: 248
+    });
+
+    // ຍອດຄ້າງ
+    const debts = list.filter((i) => !i.paid).sort((a, b) => invoiceTotal(b) - invoiceTotal(a));
+    document.getElementById("debtSub").textContent = debts.length
+      ? `${debts.length} ໃບທີ່ຍັງຄ້າງຊຳລະ`
+      : "ບໍ່ມີໃບບີນເກັບເງີນຄ້າງໃນເດືອນນີ້";
+
+    document.getElementById("debtList").innerHTML = debts.length
+      ? debts
+          .map(
+            (i) => `<div class="debt-item">
+        <div class="debt-top">
+          <span class="room-no">${i.room}</span>
+          <div class="d-main">
+            <strong>${i.tenant}</strong>
+            <span>${monthLabel(state.month, state.year)} · ກຳນົດ ${i.due}</span>
+          </div>
+          <div class="d-amount">${money(invoiceTotal(i))}</div>
+        </div>
+      </div>`
+          )
+          .join("")
+      : '<div class="empty" style="padding:24px 0">ບໍ່ມີຍອດຄ້າງຊຳລະ 🎉</div>';
+
+    document.getElementById("dueSummary").innerHTML = `
+      <div class="summary-line"><span>ຍອດຄ້າງທັງໝົດ</span><b>${money(st.unpaid)}</b></div>
+      <div class="summary-line"><span>ລາຍຮັບເດືອນນີ້</span><b>${money(st.total)}</b></div>
+      <div class="summary-line"><span>ເກັບໄດ້ແລ້ວ</span><b>${money(st.paid)}</b></div>`;
+
+    // ຫ້ອງຄ້າງສູງສຸດ
+    document.getElementById("topSub").textContent = `ສັດສ່ວນຂອງຍອດຄ້າງ ປະຈຳ ${monthLabel(state.month, state.year)}`;
+    const maxDebt = debts.length ? invoiceTotal(debts[0]) : 1;
+    document.getElementById("topDebtList").innerHTML = debts.length
+      ? debts
+          .map(
+            (i) => `<div class="debt-item">
+        <div class="debt-top">
+          <div class="d-main"><strong>ຫ້ອງ ${i.room} · ${i.tenant}</strong></div>
+          <div class="d-amount">${money(invoiceTotal(i))}</div>
+        </div>
+        <div class="debt-bar"><i style="width:${Math.round((invoiceTotal(i) / maxDebt) * 100)}%"></i></div>
+      </div>`
+          )
+          .join("")
+      : '<div class="empty" style="padding:24px 0">ບໍ່ມີຂໍ້ມູນ</div>';
+  }
+
+  monthSwitch(document.getElementById("monthSwitch"), {
+    onChange: (s) => {
+      state = s;
+      render();
+    }
+  });
+
+  DB.ready.then(render);
+});
+</script>
+</body>
+</html>
