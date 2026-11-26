@@ -27,6 +27,13 @@
         <h1>ເຂົ້າສູ່ລະບົບ</h1>
         <p class="login-sub">ເລືອກຊື່ຜູ້ໃຊ້ ແລ້ວໃສ່ PIN ເພື່ອເຂົ້າໃຊ້ງານ</p>
 
+        <a class="login-alt" href="bill-check.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          ກວດໃບບີນເກັບເງິນ
+        </a>
+
+        <div class="login-or"><span>ຫຼື</span></div>
+
         <div class="field">
           <label for="loginUser">ຜູ້ໃຊ້</label>
           <select class="input" id="loginUser"></select>
@@ -40,19 +47,21 @@
         <div class="login-err" id="loginErr">PIN ບໍ່ຖືກ — ລອງໃໝ່ອີກຄັ້ງ</div>
 
         <button class="btn btn-primary" type="submit" id="loginBtn">ເຂົ້າສູ່ລະບົບ</button>
+
+        <div class="login-hint" id="loginHint">—</div>
       </form>
 
-      <div class="login-foot">
-        <a class="login-alt" href="bill-check.html">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-          ກວດໃບບີນເກັບເງິນ
-        </a>
-        <div class="login-hint" id="loginHint">—</div>
-      </div>
+      <div class="login-terms">© 2026 ເຮືອນພັກ ສຸວັນນະວົງ · ຂໍ້ມູນທັງໝົດເກັບໄວ້ພາຍໃນລະບົບ</div>
     </section>
 
-    <!-- ຖັນຂວາ: ກຣາຟຕົກແຕ່ງ + ຄຳອະທິບາຍ -->
+    <!-- ຖັນຂວາ: ແຜງສີຂາວ-ຟ້າ + ກຣາຟຕົກແຕ່ງ -->
     <aside class="login-visual" aria-hidden="true">
+
+      <div class="lv-copy">
+        <h2>ລະບົບດຽວ<br>ຈັດການອາພາດເມັນຄົບວົງຈອນ</h2>
+        <p>ລວມຫ້ອງພັກ ຜູ້ເຊົ່າ ໃບບີນເກັບເງິນ ຈົດມິເຕີ ແລະ ວຽກສ້ອມແປງ ໄວ້ໃນບ່ອນດຽວ ພ້ອມກາຟສະຫຼຸບລາຍຮັບ-ລາຍຈ່າຍ.</p>
+      </div>
+
       <div class="lv-charts">
 
         <div class="lv-card lv-small">
@@ -107,11 +116,6 @@
           </div>
         </div>
 
-      </div>
-
-      <div class="lv-copy">
-        <h2>ລະບົບດຽວ ຈັດການອາພາດເມັນຄົບວົງຈອນ</h2>
-        <p>ລວມຫ້ອງພັກ ຜູ້ເຊົ່າ ໃບບີນເກັບເງິນ ຈົດມິເຕີ ແລະ ວຽກສ້ອມແປງ ໄວ້ໃນບ່ອນດຽວ ພ້ອມກາຟສະຫຼຸບລາຍຮັບ-ລາຍຈ່າຍ.</p>
       </div>
     </aside>
 

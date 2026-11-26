@@ -2451,93 +2451,60 @@ body[data-page="login"] {
   }
 }
 
-/* ================= ໜ້າ login: ການ໌ດມືດມົນ ພື້ນເທົາອ່ອນ + glow ສີຟ້າ ================= */
+/* ================= ໜ້າ login: ຟອມສີຂາວ ເຕັມຂອບ + ແຜງຂວາສີຂາວ-ຟ້າ ================= */
 body[data-page="login"] {
   min-width: 0;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 36px 24px;
-  background: #eceff5;
-  color: #e9f1fb;
+  display: block;
+  padding: 0;
+  background: #ffffff;
+  color: #16233a;
 }
 
-/* ກອບນອກ: ມົນ 28px ພ້ອມ glow ສີຟ້າມຸມເທິງຊ້າຍ ແລະ ລຸ່ມຂວາ */
+/* ກອບນອກ: ສອງຖັນເຕັມຂອບໜ້າຈໍ ບໍ່ມີຂອບມົນ */
 .login-shell {
-  position: relative;
-  width: min(1180px, 100%);
-  min-height: 640px;
-  margin: auto 0;
   display: grid;
-  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
-  gap: 18px;
-  padding: 22px;
-  border-radius: 28px;
-  overflow: hidden;
-  background: #07080d;
-  box-shadow: 0 50px 90px -54px rgba(9, 22, 44, 0.75), 0 2px 8px rgba(9, 22, 44, 0.08);
-}
-.login-shell::before {
-  content: "";
-  position: absolute;
-  top: -250px;
-  left: -150px;
-  width: 780px;
-  height: 540px;
-  background: radial-gradient(closest-side, rgba(108, 152, 255, 0.82), rgba(48, 94, 224, 0.3) 58%, transparent 78%);
-  pointer-events: none;
-}
-.login-shell::after {
-  content: "";
-  position: absolute;
-  right: -190px;
-  bottom: -320px;
-  width: 840px;
-  height: 580px;
-  background: radial-gradient(closest-side, rgba(82, 132, 255, 0.62), rgba(38, 78, 204, 0.2) 58%, transparent 78%);
-  pointer-events: none;
+  grid-template-columns: minmax(0, 1.34fr) minmax(0, 1fr);
+  width: 100%;
+  min-height: 100vh;
+  background: #ffffff;
 }
 
 /* ---------- ຖັນຊ້າຍ: ແບຣນ + ຟອມ ---------- */
 .login-intro {
-  position: relative;
-  z-index: 1;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  gap: 18px;
-  padding: 26px 40px 24px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(180deg, #0b0c12, #0a0b10);
-  color: #e9f1fb;
+  gap: 26px;
+  padding: 36px clamp(26px, 5.2vw, 84px) 30px;
+  background: #ffffff;
+  color: #16233a;
 }
 
-.login-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.login-brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .login-intro .login-logo {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   flex: 0 0 auto;
   margin: 0;
   padding: 0;
-  border-radius: 10px;
+  border-radius: 11px;
   background: #fff;
   object-fit: contain;
-  box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 8px 18px -14px rgba(15, 43, 91, 0.55);
 }
-.login-brand-txt { display: flex; flex-direction: column; gap: 1px; line-height: 1.35; min-width: 0; }
+.login-brand-txt { display: flex; flex-direction: column; gap: 2px; line-height: 1.35; min-width: 0; }
 .login-brand-txt strong {
   font-family: var(--font-sans);
-  font-size: 12.5px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: 0.2px;
-  color: #dfe8f6;
+  color: #0f2b5b;
 }
-.login-brand-txt span { font-size: 10.5px; font-weight: 300; letter-spacing: 0.4px; color: #7a869a; }
+.login-brand-txt span { font-size: 11px; font-weight: 400; letter-spacing: 0.4px; color: #8d9db6; }
 
 .login-card {
   width: 100%;
-  max-width: 344px;
+  max-width: 430px;
   margin: 0 auto;
   align-self: center;
   padding: 0;
@@ -2551,152 +2518,195 @@ body[data-page="login"] {
 .login-card h1 {
   margin: 0 0 10px;
   font-family: var(--font-sans);
-  font-size: 24px;
-  font-weight: 500;
-  letter-spacing: 0.2px;
-  text-align: center;
-  color: #f4f8ff;
+  font-size: 33px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+  text-align: left;
+  color: #101a2b;
 }
 .login-card .login-sub {
   margin: 0 0 26px;
-  font-size: 12.5px;
-  line-height: 1.75;
-  font-weight: 300;
-  text-align: center;
-  color: #93a0b5;
-}
-
-.login-card .field { gap: 7px; }
-.login-card .field + .field { margin-top: 15px; }
-.login-card .field label { font-size: 12.5px; font-weight: 400; color: #c3cddd; }
-.login-card .input,
-.login-card select.input {
-  height: 46px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid #262a35;
-  background: #14161d;
-  color: #eef3fb;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  box-shadow: none;
-}
-.login-card select.input {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 38px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238b97ab' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  cursor: pointer;
-}
-.login-card select.input option { background: #14161d; color: #eef3fb; }
-.login-card .input::placeholder { color: #6a7385; }
-.login-card .input:focus,
-.login-card select.input:focus {
-  outline: none;
-  border-color: #5f8dff;
-  background: #171a23;
-  box-shadow: 0 0 0 3px rgba(95, 141, 255, 0.18);
-}
-.login-card .btn {
-  width: 100%;
-  justify-content: center;
-  height: 48px;
-  margin-top: 22px;
-  border: 0;
-  border-radius: 12px;
-  background: #a9c4ff;
-  color: #0a1424;
   font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  box-shadow: 0 16px 32px -20px rgba(120, 165, 255, 0.95);
-  transition: background 0.16s, transform 0.12s;
+  line-height: 1.7;
+  font-weight: 400;
+  text-align: left;
+  color: #6b7a91;
 }
-.login-card .btn:hover { background: #bfd4ff; }
-.login-card .btn:active { transform: translateY(1px); }
-.login-card .login-err { margin-top: 12px; font-size: 12px; text-align: center; color: #ff8f8f; }
 
-.login-foot { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+/* ປຸ່ມທາງເລືອກ: ກວດໃບບີນເກັບເງິນ */
 .login-alt {
-  width: 100%;
-  max-width: 344px;
-  height: 46px;
+  height: 52px;
   padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.02);
-  color: #dbe4f2;
-  font-size: 12.5px;
-  font-weight: 400;
+  border-radius: 11px;
+  border: 1px solid #dfe6f0;
+  background: #ffffff;
+  color: #243349;
+  font-size: 13.5px;
+  font-weight: 500;
   text-decoration: none;
   transition: background 0.16s, border-color 0.16s, color 0.16s;
 }
-.login-alt svg { color: #9db4d4; }
+.login-alt svg { color: #3b7fe4; }
 .login-alt:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(160, 190, 255, 0.42);
-  color: #fff;
-}
-.login-hint {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.6;
-  font-weight: 300;
-  text-align: center;
-  color: #7c8798;
+  border-color: #b7d2fb;
+  background: #f4f9ff;
+  color: #12345f;
 }
 
-/* ---------- ຖັນຂວາ: ກຣາຟຕົກແຕ່ງ ---------- */
+.login-or {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 18px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: #93a2b8;
+}
+.login-or::before,
+.login-or::after { content: ""; flex: 1; height: 1px; background: #e6ecf5; }
+
+.login-card .field { gap: 7px; }
+.login-card .field + .field { margin-top: 15px; }
+.login-card .field label { font-size: 13px; font-weight: 500; color: #374151; }
+.login-card .input,
+.login-card select.input {
+  height: 52px;
+  padding: 0 15px;
+  border-radius: 11px;
+  border: 1px solid #dfe6f0;
+  background: #ffffff;
+  color: #16233a;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  box-shadow: none;
+}
+.login-card select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7a91' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  cursor: pointer;
+}
+.login-card select.input option { background: #ffffff; color: #16233a; }
+.login-card .input::placeholder { color: #a8b4c6; }
+.login-card .input:focus,
+.login-card select.input:focus {
+  outline: none;
+  border-color: #3b7fe4;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 127, 228, 0.14);
+}
+.login-card .btn {
+  width: 100%;
+  justify-content: center;
+  height: 52px;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 11px;
+  background: #2f7df6;
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  box-shadow: 0 20px 34px -22px rgba(47, 125, 246, 0.9);
+  transition: background 0.16s, transform 0.12s;
+}
+.login-card .btn:hover { background: #1f6ee8; }
+.login-card .btn:active { transform: translateY(1px); }
+.login-card .login-err { margin-top: 12px; font-size: 12px; text-align: left; color: #d93b3b; }
+.login-hint {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+  font-weight: 400;
+  text-align: left;
+  color: #93a2b8;
+}
+
+.login-terms { font-size: 11.5px; font-weight: 400; line-height: 1.7; color: #a0aec2; }
+
+/* ---------- ຖັນຂວາ: ແຜງສີຂາວ-ຟ້າ + ກຣາຟຕົກແຕ່ງ ---------- */
 .login-visual {
   position: relative;
-  z-index: 1;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 34px 26px 30px;
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  justify-content: center;
+  gap: 36px;
+  padding: 54px clamp(26px, 3.6vw, 58px) 46px;
+  border-left: 1px solid #e2ecfb;
+  color: #0f2b5b;
   background:
-    radial-gradient(580px 360px at 10% -8%, rgba(88, 136, 255, 0.62), transparent 62%),
-    radial-gradient(540px 320px at 50% 116%, rgba(62, 110, 248, 0.58), transparent 64%),
-    linear-gradient(165deg, #10131c 0%, #0b0d14 55%, #080a10 100%);
+    radial-gradient(760px 540px at 110% -12%, rgba(126, 176, 255, 0.55), transparent 62%),
+    radial-gradient(660px 480px at -12% 114%, rgba(158, 196, 255, 0.5), transparent 66%),
+    linear-gradient(165deg, #f6faff 0%, #e8f1ff 52%, #d8e7ff 100%);
+}
+.login-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.85;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='170' height='170' viewBox='0 0 170 170'><g fill='%232f7df6' fill-opacity='0.09' font-family='monospace' font-size='15'><text x='10' y='26'>{ }</text><text x='96' y='56'>( )</text><text x='22' y='92'>;</text><text x='104' y='122'>[ ]</text><text x='34' y='152'>=&gt;</text></g></svg>");
+  background-size: 170px 170px;
+}
+.login-visual > * { position: relative; z-index: 1; }
+
+.lv-copy { text-align: center; }
+.lv-copy h2 {
+  margin: 0 0 14px;
+  font-family: var(--font-sans);
+  font-size: clamp(26px, 2.6vw, 38px);
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: -0.3px;
+  color: #0b2a5e;
+}
+.lv-copy p {
+  margin: 0 auto;
+  max-width: 420px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.85;
+  color: #4f6a92;
 }
 
 .lv-charts { position: relative; display: flex; flex-direction: column; }
 .lv-card {
   position: relative;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(15, 17, 25, 0.97), rgba(9, 11, 17, 0.97));
-  box-shadow: 0 26px 52px -32px rgba(0, 0, 0, 0.95);
+  border: 1px solid #dbe7fa;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 30px 54px -38px rgba(24, 66, 130, 0.6);
 }
-.lv-small { width: 76%; margin-left: 3%; padding: 14px 16px 10px; }
-.lv-label { font-size: 10.5px; font-weight: 300; letter-spacing: 0.2px; color: #9aa6ba; }
-.lv-value { margin-top: 2px; font-size: 26px; font-weight: 300; letter-spacing: 0.5px; color: #f2f6ff; }
-.lv-value small { margin-left: 4px; font-size: 11px; font-weight: 300; color: #97a3b8; }
+.lv-small { width: 80%; margin-left: 2%; padding: 16px 18px 10px; }
+.lv-label { font-size: 10.5px; font-weight: 400; letter-spacing: 0.2px; color: #6b83a8; }
+.lv-value { margin-top: 2px; font-size: 27px; font-weight: 600; letter-spacing: 0.2px; color: #0f2b5b; }
+.lv-value small { margin-left: 4px; font-size: 11px; font-weight: 400; color: #7d92b3; }
 .lv-spark { position: relative; margin-top: 4px; }
 .lv-spark svg { display: block; width: 100%; height: 74px; }
-.lv-spark-line { fill: none; stroke: #bfd2f7; stroke-width: 1.8; stroke-linecap: round; }
-.lv-dot { fill: #e4edff; }
-.lv-dot-halo { fill: rgba(150, 180, 255, 0.2); }
+.lv-spark-line { fill: none; stroke: #2f7df6; stroke-width: 1.8; stroke-linecap: round; }
+.lv-dot { fill: #2f7df6; }
+.lv-dot-halo { fill: rgba(47, 125, 246, 0.18); }
 .lv-chip {
   position: absolute;
   left: 56%;
   top: 4px;
   padding: 3px 8px;
   border-radius: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(26, 30, 42, 0.95);
+  border: 1px solid #dbe7fa;
+  background: #ffffff;
+  box-shadow: 0 8px 16px -12px rgba(24, 66, 130, 0.6);
   font-size: 9.5px;
-  font-weight: 300;
-  color: #cfd9ea;
+  font-weight: 400;
+  color: #3f5b83;
   white-space: nowrap;
 }
 
@@ -2716,23 +2726,23 @@ body[data-page="login"] {
   justify-content: space-between;
   padding: 2px 0 18px;
   font-size: 8px;
-  font-weight: 300;
+  font-weight: 400;
   text-align: right;
-  color: #6f7b8e;
+  color: #8298b6;
 }
 .lv-chart { position: relative; min-width: 0; }
 .lv-chart svg { display: block; width: 100%; height: 128px; }
-.lv-grid line { stroke: rgba(255, 255, 255, 0.06); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.lv-line-a { fill: none; stroke: #c8d8f7; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
-.lv-line-b { fill: none; stroke: #7f93b8; stroke-width: 1.4; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
-.lv-marker { stroke: rgba(190, 210, 255, 0.45); stroke-width: 1; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
+.lv-grid line { stroke: #e6eefa; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.lv-line-a { fill: none; stroke: #2f7df6; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+.lv-line-b { fill: none; stroke: #a9c3e8; stroke-width: 1.4; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
+.lv-marker { stroke: rgba(47, 125, 246, 0.4); stroke-width: 1; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
 .lv-axis-x {
   display: flex;
   justify-content: space-between;
   margin-top: 6px;
   font-size: 8px;
-  font-weight: 300;
-  color: #6f7b8e;
+  font-weight: 400;
+  color: #8298b6;
 }
 .lv-tag {
   position: absolute;
@@ -2740,37 +2750,19 @@ body[data-page="login"] {
   top: 4px;
   padding: 3px 7px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(26, 30, 42, 0.95);
+  border: 1px solid #dbe7fa;
+  background: #ffffff;
+  box-shadow: 0 8px 16px -12px rgba(24, 66, 130, 0.6);
   font-size: 9px;
-  font-weight: 300;
-  color: #cfd9ea;
+  font-weight: 400;
+  color: #3f5b83;
   white-space: nowrap;
 }
 
-.lv-copy { margin-top: auto; padding: 0 4px; text-align: center; }
-.lv-copy h2 {
-  margin: 0 0 10px;
-  font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.55;
-  letter-spacing: 0.2px;
-  color: #eef4ff;
-}
-.lv-copy p {
-  margin: 0 auto;
-  max-width: 380px;
-  font-size: 11px;
-  font-weight: 300;
-  line-height: 1.85;
-  color: #8d99ad;
-}
-
 @media (max-width: 1020px) {
-  body[data-page="login"] { padding: 24px 16px; align-items: flex-start; }
-  .login-shell { grid-template-columns: 1fr; max-width: 520px; padding: 16px; border-radius: 22px; }
+  .login-shell { grid-template-columns: 1fr; }
   .login-visual { display: none; }
-  .login-intro { padding: 24px 22px; border-radius: 16px; }
-  .login-card h1 { font-size: 21px; }
+  .login-intro { padding: 26px 22px 30px; }
+  .login-card h1 { font-size: 27px; }
+  .login-card { max-width: 440px; }
 }
