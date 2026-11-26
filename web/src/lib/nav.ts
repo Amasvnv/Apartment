@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import {
   IconBuilding,
+  IconChartHistogram,
   IconGauge,
   IconHistory,
   IconLayoutDashboard,
@@ -28,6 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { key: "rooms", label: "ຫ້ອງພັກ", path: "/rooms", icon: IconBuilding },
   { key: "tenants", label: "ຜູ້ເຊົ່າ", path: "/tenants", icon: IconUsers },
   { key: "invoices", label: "ໃບບີນເກັບເງິນ", path: "/invoices", icon: IconReceipt2, badge: "invoices" },
+  { key: "reports", label: "ລາຍງານ", path: "/reports", icon: IconChartHistogram },
   { key: "bill-check", label: "ກວດເບິ່ງບີນ", path: "/bill-check", icon: IconSearch },
   { key: "repairs", label: "ສ້ອມແປງ", path: "/repairs", icon: IconTools, badge: "repairs" },
   { key: "activity", label: "ການເຄື່ອນໄຫວ", path: "/activity", icon: IconHistory },
