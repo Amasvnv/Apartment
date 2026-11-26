@@ -2747,13 +2747,12 @@ body[data-page="login"] {
 .lv-hero {
   display: flex;
   justify-content: center;
+  margin-inline: calc(-1 * clamp(18px, 2.4vw, 38px));
 }
 .lv-hero img {
   display: block;
-  width: min(420px, 94%);
-  height: 180px;
-  object-fit: cover;
-  object-position: center 56%;
+  width: min(492px, 100%);
+  height: auto;
   border: 0;
   border-radius: 0;
   background: none;
@@ -2774,7 +2773,7 @@ body[data-page="login"] {
   .lv-features { gap: 8px; }
   .lv-feature { padding: 9px 12px; gap: 8px; }
   .lv-feature h3 { font-size: 12.5px; }
-  .lv-hero img { width: min(300px, 84%); height: 129px; }
+  .lv-hero img { width: min(330px, 100%); }
   .lv-logo img { width: min(180px, 46%); }
 }
 
