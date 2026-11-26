@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Card, Group, Stack, Text, TextInput, Title } from "@mantine/core";
 import { IconArrowLeft, IconFileInvoice, IconPrinter, IconSearch } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import BillPaper from "../components/BillPaper";
 import { useStore } from "../data/store";
 import { invoiceTotal, ctxOf } from "../lib/compute";
@@ -10,8 +10,10 @@ import { money, monthLabel } from "../lib/format";
 export default function BillCheck() {
   const { data } = useStore();
   const navigate = useNavigate();
-  const [room, setRoom] = useState("");
-  const [query, setQuery] = useState("");
+  const location = useLocation();
+  const initialRoom = new URLSearchParams(location.search).get("room") || "";
+  const [room, setRoom] = useState(initialRoom);
+  const [query, setQuery] = useState(initialRoom);
 
   const ctx = useMemo(() => ctxOf(data), [data]);
   const invoices = useMemo(

@@ -28,14 +28,22 @@ jobs:
         with:
           enablement: true
 
-      - name: Collect static files
-        run: |
-          mkdir -p dist
-          cp -r *.html assets dist/
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "web/package-lock.json"
+
+      - name: Install web dependencies
+        run: npm ci --prefix web
+
+      - name: Build React app
+        run: npm run build --prefix web
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: web/dist
 
       - name: Deploy to GitHub Pages
         id: deployment

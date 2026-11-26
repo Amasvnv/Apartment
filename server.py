@@ -20,6 +20,9 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+DIST_DIR = os.path.join(ROOT, "web", "dist")
+# ຖ້າມີ build ຂອງ React app ໃຫ້ເສີບຈາກ dist, ບໍ່ດັ່ງນັ້ນເສີບໜ້າ HTML ເກົ່າຈາກໂຟນເດີຫຼັກ
+SERVE_ROOT = DIST_DIR if os.path.isfile(os.path.join(DIST_DIR, "index.html")) else ROOT
 DATA_DIR = os.path.join(ROOT, "data")
 DB_PATH = os.path.join(DATA_DIR, "apartment.db")
 SCHEMA_PATH = os.path.join(ROOT, "db", "schema.sql")
@@ -344,7 +347,7 @@ def write_state(data):
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=ROOT, **kwargs)
+        super().__init__(*args, directory=SERVE_ROOT, **kwargs)
 
     def log_message(self, fmt, *args):
         sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
@@ -417,6 +420,7 @@ def main():
     init_db()
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     print(f"database: {DB_PATH}")
+    print(f"web root: {SERVE_ROOT}")
     print(f"open: http://127.0.0.1:{port}/index.html")
     sys.stdout.flush()
     try:

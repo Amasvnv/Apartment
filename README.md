@@ -1,37 +1,71 @@
 # ລະບົບຈັດການອາພາດເມັນ (ທີມສີຟ້າ)
 
-ເວັບຈັດການອາພາດເມັນ 6 ໜ້າ ພາສາລາວ ອອກແບບສຳລັບ browser ເດັສທັອບ.
-HTML/CSS/JS ລ້ວນໆ ບໍ່ຕ້ອງ build, ມີເຊີບເວີນ້ອຍໆ (Python) ສຳລັບຖານຂໍ້ມູນ SQLite.
+ເວັບຈັດການອາພາດເມັນ ພາສາລາວ ອອກແບບສຳລັບ browser ເດສທັອບ.
 
-## ການເປີດໃຊ້
+- **UI:** React 19 + Vite + TypeScript + Mantine 8 (ດີໄຊລ໌ຂາວ-ຟ້າ), Recharts ຜ່ານ `@mantine/charts`
+- **ຂໍ້ມູນ:** Supabase (PostgreSQL, RPC `apt_load` / `apt_save`) → `/api/state` (SQLite, `server.py`) → localStorage
+- **ການເຂົ້າສູ່ລະບົບ:** ເລືອກຜູ້ໃຊ້ + PIN, ສິດແຍກຕາມໜ້າ (ເບິ່ງ / ແກ້ໄຂ / ລຶບ)
 
-```bash
-python server.py          # ເປີດທີ່ http://127.0.0.1:4173/index.html
-python server.py 8080     # ກຳນົດ port ເອງ
+## ໂຄງສ້າງ
+
+```
+web/                 ແອັບ React (Vite root, build → web/dist)
+  src/pages/         ໜ້າຕ່າງໆ: Overview, Meter, Rooms, Tenants, Invoices,
+                     InvoicePrint, BillCheck, Reports, Repairs, Settings,
+                     Users, Activity, Database, Login
+  src/data/          ຊັ້ນຂໍ້ມູນ: types, seed, storage (Supabase/API/local), store (Context)
+  src/lib/           ສູດຄິດໄລ່ (compute), ການຈັດຮູບແບບ (format), ເມນູ (nav), ການແກ້ຂໍ້ມູນ (dataOps)
+  src/components/    AppShell, MonthSwitcher, BillPaper, StatCard, PageHeader
+  public/db.config.js  ຄ່າ Supabase ທີ່ຕິດໄປກັບ build (ຖ້າບໍ່ຕັ້ງໃນໜ້າ Database)
+server.py            ເສີບ web/dist (ຖ້າມີ) ຫຼື ໜ້າ HTML ເກົ່າ + API SQLite
+data/apartment.db    ຖານຂໍ້ມູນ SQLite (gitignored)
+db/schema.sql         ໂຄງສ້າງຕາຕະລາງ
 ```
 
-`server.py` ເຮັດ 2 ຢ່າງ: ເສີບໄຟລ໌ເວັບ ແລະ ໃຫ້ REST API ຂອງຖານຂໍ້ມູນ SQLite.
+ໜ້າ HTML ເກົ່າ (`index.html`, `invoices.html`, `assets/styles.css`, `deploy/`, …) ຍັງຢູ່ໃນ repo
+ເພື່ອອ້າງອີງ ແຕ່ **ບໍ່ຖືກ deploy ແລ້ວ** — GitHub Pages ເຜີຍແຜ່ `web/dist` ເທົ່ານັ້ນ.
 
-- ຖານຂໍ້ມູນ: `data/apartment.db` (ສ້າງອັດຕະໂນມັດຄັ້ງທຳອິດ ພ້ອມຂໍ້ມູນຕົວຢ່າງ)
-- ໂຄງສ້າງຕາຕະລາງ: `db/schema.sql`
-- API: `GET /api/state`, `PUT /api/state`, `GET /api/health`
+## ການເປີດໃຊ້ (ພັດທະນາ)
 
-ຂໍ້ມູນທັງໝົດ (ຫ້ອງ, ຜູ້ເຊົ່າ, ໃບບີນເກັບເງີນ) ຖືກບັນທຶກລົງ SQLite ທຸກຄັ້ງທີ່ແກ້ໄຂ.
+```bash
+npm --prefix web install     # ຕິດຕັ້ງ dependencies ຄັ້ງດຽວ
 
-## ໂໝດການເກັບຂໍ້ມູນ (assets/db.js)
+npm run dev:api              # ເທີມິນານ 1: API SQLite ທີ່ http://127.0.0.1:4173
+npm run dev                  # ເທີມິນານ 2: Vite ທີ່ http://127.0.0.1:5173 (proxy /api → 4173)
+```
 
-1. **Supabase (PostgreSQL)** — ຖ້າຕັ້ງຄ່າ Project URL + anon key ໃນໜ້າ `database.html` (ມີສິດກ່ອນໝູ່)
-2. **SQLite ຜ່ານ `server.py`** — ໃຊ້ອັດຕະໂນມັດເມື່ອຍັງບໍ່ຕັ້ງຄ່າ Supabase
-3. **Turso (ຄລາວ)** — ຖ້າຕັ້ງຄ່າ URL/token ແບບ Turso
-4. **ເບົາຣ໌ເຊີ (localStorage)** — ໃຊ້ເມື່ອເປີດແບບໄຟລ໌ສະຖິຕິ (ບໍ່ມີ API)
+ຖ້າບໍ່ຮັບ API, ແອັບຈະໃຊ້ cache ໃນ localStorage ຫຼືຂໍ້ມູນຕົວຢ່າງ.
 
-## ເຊື່ອມຕໍ່ Supabase (ຖານຂໍ້ມູນຈິງ)
+## Build ແລະ ເປີດແບບ production ໃນເຄື່ອງ
 
-1. ສ້າງ project ທີ່ [supabase.com](https://supabase.com) (Free tier ພຽງພໍ)
-2. ເປີດ **SQL Editor** → ວາງໄຟລ໌ `db/supabase-schema.sql` ທັງໝົດ → **Run** (ສ້າງຕາຕະລາງ + ຟັງຊັນ `apt_load` / `apt_save` + RLS)
-3. ເປີດ **Project Settings → API** ຄັດລອກ **Project URL** ແລະ **anon (publishable) key**
-4. ເປີດໜ້າ `database.html` ວາງທັງສອງຄ່າ ແລ້ວກົດ “ບັນທຶກ ແລະ ເຊື່ອມຕໍ່”
-5. ຖ້າມີຂໍ້ມູນຢູ່ SQLite ແລ້ວ ໃຫ້ຍ້າຍຄັ້ງດຽວ:
+```bash
+npm run build                          # → web/dist (base /Apartment/)
+python server.py                       # ເສີບ web/dist + API ທີ່ http://127.0.0.1:4173
+# ຫຼື
+npm run start                          # build ແລ້ວເປີດ server.py
+npm run preview                        # Vite preview ທີ່ http://127.0.0.1:4174/Apartment/
+```
+
+## ການເຜີຍແຜ່
+
+Push ຂຶ້ນ `main` → GitHub Actions (`.github/workflows/pages.yml`) ຈະ:
+
+1. `npm ci --prefix web`
+2. `npm run build --prefix web`
+3. ອັບໂຫຼດ `web/dist` ຂຶ້ນ GitHub Pages
+
+Live: <https://amasvnv.github.io/Apartment/>
+
+## ຖານຂໍ້ມູນ
+
+1. **Supabase** — ຖ້າມີ Project URL + anon key (ໜ້າ **ຖານຂໍ້ມູນ** ຫຼື `web/public/db.config.js`) ມີສິດກ່ອນໝູ່
+2. **SQLite** — `/api/state` ຈາກ `server.py` (ໃຊ້ເມື່ອບໍ່ຕັ້ງ Supabase ແລະ ມີເຊີບເວີ)
+3. **localStorage** — ເມື່ອເປີດແບບໄຟລ໌ສະຖິຕິ ຫຼື API ໃຊ້ບໍ່ໄດ້
+
+ຕາຕະລາງ Supabase ເປີດ RLS ແລະ ເຂົ້າເຖິງຜ່ານຟັງຊັນ RPC ເທົ່ານັ້ນ — ໃຊ້ **anon key** ເທົ່ານັ້ນ
+(ຫ້າມໃຊ້ `service_role` key ໃນເບົາຣ໌ເຊີ). ຂໍ້ມູນການເຊື່ອມຕໍ່ຖືກເກັບໃນ localStorage ຂອງ browser ນັ້ນ.
+
+ການຍ້າຍຂໍ້ມູນຈາກ SQLite ຂຶ້ນ Supabase ຄັ້ງດຽວ:
 
 ```bash
 set SUPABASE_URL=https://xxxxxxx.supabase.co
@@ -39,20 +73,21 @@ set SUPABASE_KEY=<anon key>
 python tools/migrate_to_supabase.py --yes
 ```
 
-ຂໍ້ມູນການເຊື່ອມຕໍ່ຖືກເກັບໄວ້ໃນ `localStorage` ຂອງ browser ເຄື່ອງນັ້ນ (ຫຼື ຕັ້ງໃນ `assets/db.config.js`). ໃຊ້ **anon key ເທົ່ານັ້ນ** — ຢ່າວາງ `service_role` key ໃນເບົາຣ໌ເຊີ. ຕາຕະລາງເປີດ RLS ແລະ ເຂົ້າເຖິງໄດ້ຜ່ານຟັງຊັນ RPC ເທົ່ານັ້ນ ດັ່ງນັ້ນຢ່າເຜີຍແຜ່ໜ້າເວັບນີ້ສູ່ສາທາລະນະ.
+## ໜ້າຕ່າງໆ (routes ໃນ `#/`)
 
-## ໜ້າຕ່າງໆ
-
-| ໄຟລ໌ | ໜ້າ |
+| Route | ໜ້າ |
 | --- | --- |
-| `index.html` | ພາບລວມ |
-| `meter.html` | ຈົດມິເຕີ |
-| `rooms.html` | ຫ້ອງພັກ |
-| `tenants.html` | ຜູ້ເຊົ່າ |
-| `invoices.html` | ໃບບີນເກັບເງີນ |
-| `reports.html` | ລາຍງານ |
-| `repairs.html` | ສ້ອມແປງ (ແຈ້ງຊ່ອມ, ຄວາມສຳຄັນ, ສະຖານະ, ຜູ້ຮັບຜິດຊອບ, ຄ່າໃຊ້ຈ່າຍ) |
-| `settings.html` | ຕັ້ງຄ່າອັດຕາຄ່າບໍລິການ (ໄຟຟ້າ / ນ້ຳ / ຂີ້ເຫຍື້ອ / ຄ່າອື່ນໆ) |
-| `database.html` | ຕັ້ງຄ່າຖານຂໍ້ມູນ |
+| `#/` | ພາບລວມ |
+| `#/meter` | ຈົດມິເຕີ |
+| `#/rooms` | ຫ້ອງພັກ |
+| `#/tenants` | ຜູ້ເຊົ່າ |
+| `#/invoices` | ໃບບີນເກັບເງິນ (+ `#/invoices/<ເລກທີ>/print` ພິມ A5) |
+| `#/reports` | ລາຍງານ |
+| `#/repairs` | ສ້ອມແປງ |
+| `#/activity` | ການເຄື່ອນໄຫວ |
+| `#/users` | ຜູ້ໃຊ້ |
+| `#/settings` | ຕັ້ງຄ່າອັດຕາ |
+| `#/database` | ເຊື່ອມຕໍ່ຖານຂໍ້ມູນ |
+| `#/bill-check` | ກວດເບິ່ງບີນ (ສາທາລະນະ, ບໍ່ຕ້ອງ login) |
 
-> ອັດຕາຄ່າບໍລິການ ແລະ ເດືອນທີ່ຈົດມິເຕີ ຖືກເກັບໄວ້ໃນຕາຕະລາງ `meta` (key `settings`, `viewMonth`) ຂອງຖານຂໍ້ມູນດຽວກັນກັບຂໍ້ມູນອື່ນ (SQLite ຫຼື Supabase).
+ລິ້ງເກົ່າ `bill-check.html?room=101` ຈະ redirect ໄປ `index.html#/bill-check?room=101`.

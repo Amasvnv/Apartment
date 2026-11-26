@@ -2,9 +2,13 @@
   "name": "apartment",
   "version": "1.0.0",
   "private": true,
-  "description": "ລະບົບຈັດການອາພາດເມັນ — ເວັບ static + Supabase",
+  "description": "ລະບົບຈັດການອາພາດເມັນ — React + Vite + Mantine, ຖານຂໍ້ມູນ Supabase / SQLite",
   "scripts": {
-    "dev": "python server.py",
-    "start": "python server.py"
+    "dev": "npm --prefix web run dev",
+    "dev:api": "python server.py",
+    "build": "npm --prefix web run build",
+    "typecheck": "npm --prefix web run typecheck",
+    "preview": "npm --prefix web run preview",
+    "start": "npm run build && python server.py"
   }
 }
