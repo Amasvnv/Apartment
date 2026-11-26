@@ -2632,14 +2632,14 @@ body[data-page="login"] {
 
 .login-terms { font-size: 11.5px; font-weight: 400; line-height: 1.7; color: #a0aec2; }
 
-/* ---------- ຖັນຂວາ: ແຜງສີຂາວ-ຟ້າ + ກຣາຟຕົກແຕ່ງ ---------- */
+/* ---------- ຖັນຂວາ: ແຜງສີຂາວ-ຟ້າ + ຮູບ + ລາຍການຄຸນສົມບັດ ---------- */
 .login-visual {
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   padding: 40px clamp(26px, 3.6vw, 58px) 34px;
   border-left: 1px solid #e2ecfb;
   color: #0f2b5b;
@@ -2671,7 +2671,7 @@ body[data-page="login"] {
 }
 .lv-copy p {
   margin: 0 auto;
-  max-width: 420px;
+  max-width: 430px;
   font-size: 13px;
   font-weight: 400;
   line-height: 1.85;
@@ -2689,14 +2689,6 @@ body[data-page="login"] {
   letter-spacing: 1.3px;
   text-transform: uppercase;
   color: #2f7df6;
-}
-.lv-copy .lv-detail {
-  margin: 12px auto 0;
-  max-width: 400px;
-  font-size: 11.5px;
-  font-weight: 400;
-  line-height: 1.75;
-  color: #5a769d;
 }
 .lv-facts {
   display: flex;
@@ -2729,7 +2721,7 @@ body[data-page="login"] {
 }
 .lv-hero img {
   display: block;
-  width: min(232px, 58%);
+  width: min(200px, 52%);
   height: auto;
   border-radius: 16px;
   border: 1px solid #dbe7fa;
@@ -2737,85 +2729,68 @@ body[data-page="login"] {
   box-shadow: 0 26px 44px -32px rgba(24, 66, 130, 0.6);
 }
 
-.lv-charts { position: relative; display: flex; flex-direction: column; }
-.lv-card {
-  position: relative;
+/* ລາຍການຫຼັກ 9 ຂໍ້: ຕາຕະລາງ 3 ຖັນ × 3 ແຖວ */
+.lv-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 15px 18px;
+  padding: 17px 18px;
   border-radius: 16px;
   border: 1px solid #dbe7fa;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 30px 54px -38px rgba(24, 66, 130, 0.6);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 28px 48px -40px rgba(24, 66, 130, 0.55);
 }
-.lv-small { width: 80%; margin-left: 2%; padding: 16px 18px 10px; }
-.lv-label { font-size: 10.5px; font-weight: 400; letter-spacing: 0.2px; color: #6b83a8; }
-.lv-value { margin-top: 2px; font-size: 27px; font-weight: 600; letter-spacing: 0.2px; color: #0f2b5b; }
-.lv-value small { margin-left: 4px; font-size: 11px; font-weight: 400; color: #7d92b3; }
-.lv-spark { position: relative; margin-top: 4px; }
-.lv-spark svg { display: block; width: 100%; height: 62px; }
-.lv-spark-line { fill: none; stroke: #2f7df6; stroke-width: 1.8; stroke-linecap: round; }
-.lv-dot { fill: #2f7df6; }
-.lv-dot-halo { fill: rgba(47, 125, 246, 0.18); }
-.lv-chip {
-  position: absolute;
-  left: 56%;
-  top: 4px;
-  padding: 3px 8px;
-  border-radius: 7px;
-  border: 1px solid #dbe7fa;
-  background: #ffffff;
-  box-shadow: 0 8px 16px -12px rgba(24, 66, 130, 0.6);
+.lv-feature { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 7px; row-gap: 4px; min-width: 0; }
+.lv-feature .lv-f-num { grid-area: 1 / 1; }
+.lv-feature h3 { grid-area: 1 / 2; }
+.lv-feature ul { grid-area: 2 / 1 / 3 / 3; }
+.lv-f-num {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #eaf2ff;
+  color: #2f7df6;
   font-size: 9.5px;
-  font-weight: 400;
-  color: #3f5b83;
-  white-space: nowrap;
+  font-weight: 700;
+  line-height: 1;
 }
-
-.lv-big {
-  width: 104%;
-  align-self: flex-end;
-  margin-right: -4%;
-  margin-top: -18px;
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  gap: 6px;
-  padding: 14px 12px 10px 8px;
+.lv-feature h3 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #12345f;
 }
-.lv-axis-y {
+.lv-feature ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 2px 0 18px;
-  font-size: 8px;
-  font-weight: 400;
-  text-align: right;
-  color: #8298b6;
+  gap: 3px;
 }
-.lv-chart { position: relative; min-width: 0; }
-.lv-chart svg { display: block; width: 100%; height: 112px; }
-.lv-grid line { stroke: #e6eefa; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.lv-line-a { fill: none; stroke: #2f7df6; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
-.lv-line-b { fill: none; stroke: #a9c3e8; stroke-width: 1.4; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
-.lv-marker { stroke: rgba(47, 125, 246, 0.4); stroke-width: 1; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
-.lv-axis-x {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 6px;
-  font-size: 8px;
+.lv-feature li {
+  position: relative;
+  padding-left: 9px;
+  font-size: 9.5px;
   font-weight: 400;
-  color: #8298b6;
+  line-height: 1.6;
+  color: #5a769d;
 }
-.lv-tag {
+.lv-feature li::before {
+  content: "";
   position: absolute;
-  right: 14%;
-  top: 4px;
-  padding: 3px 7px;
-  border-radius: 6px;
-  border: 1px solid #dbe7fa;
-  background: #ffffff;
-  box-shadow: 0 8px 16px -12px rgba(24, 66, 130, 0.6);
-  font-size: 9px;
-  font-weight: 400;
-  color: #3f5b83;
-  white-space: nowrap;
+  left: 0;
+  top: 6px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #8fb4ff;
 }
 
 @media (max-width: 1020px) {
@@ -2826,13 +2801,17 @@ body[data-page="login"] {
   .login-card { max-width: 440px; }
 }
 
-@media (max-height: 900px) {
-  .login-visual { gap: 18px; padding: 32px clamp(24px, 3.2vw, 52px) 26px; }
-  .lv-hero img { width: min(196px, 50%); }
-  .lv-copy .lv-detail { margin-top: 10px; }
+@media (max-height: 1000px) {
+  .login-visual { gap: 16px; padding: 30px clamp(24px, 3.2vw, 52px) 26px; }
+  .lv-copy h2 { font-size: clamp(24px, 2.3vw, 32px); }
+  .lv-hero img { width: min(168px, 46%); }
+  .lv-features { gap: 12px 16px; padding: 14px 16px; }
+  .lv-f-num { width: 17px; height: 17px; font-size: 9px; }
+  .lv-feature h3 { font-size: 11px; }
+  .lv-feature li { font-size: 9px; line-height: 1.5; }
 }
 
-@media (max-height: 800px) {
+@media (max-height: 840px) {
   .lv-hero { display: none; }
   .lv-facts { margin-top: 12px; }
 }

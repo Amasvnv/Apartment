@@ -54,14 +54,13 @@
       <div class="login-terms">© 2026 ເຮືອນພັກ ສຸວັນນະວົງ · ຂໍ້ມູນທັງໝົດເກັບໄວ້ພາຍໃນລະບົບ</div>
     </section>
 
-    <!-- ຖັນຂວາ: ແຜງສີຂາວ-ຟ້າ + ກຣາຟຕົກແຕ່ງ -->
+    <!-- ຖັນຂວາ: ແຜງສີຂາວ-ຟ້າ + ຮູບ + ລາຍການຄຸນສົມບັດ -->
     <aside class="login-visual" aria-hidden="true">
 
       <div class="lv-copy">
         <span class="lv-eyebrow">Apartment Manager</span>
         <h2>ລະບົບດຽວ<br>ຈັດການອາພາດເມັນຄົບວົງຈອນ</h2>
-        <p>ລວມຫ້ອງພັກ ຜູ້ເຊົ່າ ໃບບີນເກັບເງິນ ຈົດມິເຕີ ແລະ ວຽກສ້ອມແປງ ໄວ້ໃນບ່ອນດຽວ ພ້ອມກາຟສະຫຼຸບລາຍຮັບ-ລາຍຈ່າຍ.</p>
-        <p class="lv-detail">ຕິດຕາມຍອດຄ້າງຊຳລະ, ກຳນົດສິດຜູ້ໃຊ້ (ຜູ້ຈັດການ/ຜູ້ເບິ່ງ) ແລະ ຄົ້ນຫາຂໍ້ມູນຫ້ອງໄດ້ທັນທີ</p>
+        <p>ລວມຫ້ອງພັກ ຜູ້ເຊົ່າ ໃບບີນເກັບເງິນ ຈົດມິເຕີ ແລະ ວຽກສ້ອມແປງ ໄວ້ໃນບ່ອນດຽວ.</p>
         <div class="lv-facts">
           <span class="lv-fact">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V6l7-3 7 3v15"/><path d="M9 9h2M13 9h2M9 13h2M13 13h2M11 21v-4h2v4"/></svg>
@@ -82,58 +81,95 @@
         <img src="assets/apartment-illustration.jpg" alt="ພາບປະກອບຕຶກອາພາດເມັນ" decoding="async">
       </div>
 
-      <div class="lv-charts">
+      <div class="lv-features">
 
-        <div class="lv-card lv-small">
-          <div class="lv-label">ລາຍຮັບປີນີ້</div>
-          <div class="lv-value">141.4<small>ລ້ານ ₭</small></div>
-          <div class="lv-spark">
-            <svg viewBox="0 0 300 78" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="lvSparkFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#7ba7ff" stop-opacity="0.34"/>
-                  <stop offset="100%" stop-color="#7ba7ff" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <path class="lv-spark-area" d="M2 62 C 24 62 32 44 48 48 S 76 60 92 46 S 118 30 134 40 S 160 58 176 46 S 198 18 216 24 S 244 10 262 16 L262 78 L2 78 Z" fill="url(#lvSparkFill)"/>
-              <path class="lv-spark-line" d="M2 62 C 24 62 32 44 48 48 S 76 60 92 46 S 118 30 134 40 S 160 58 176 46 S 198 18 216 24 S 244 10 262 16" vector-effect="non-scaling-stroke"/>
-              <circle class="lv-dot-halo" cx="216" cy="24" r="9"/>
-              <circle class="lv-dot" cx="216" cy="24" r="4.5"/>
-            </svg>
-            <span class="lv-chip">141,370,400 ₭</span>
-          </div>
+        <div class="lv-feature">
+          <span class="lv-f-num">1</span>
+          <h3>ຈັດການຫ້ອງພັກ</h3>
+          <ul>
+            <li>ຜັງຫ້ອງທຸກອາຄານ/ຊັ້ນ · ສະຖານະ ວ່າງ / ມີຜູ້ເຊົ່າ / ຈອງ / ປິດຊ່ອມ</li>
+            <li>ຂໍ້ມູນຫ້ອງ: ປະເພດ, ຂະໜາດ, ລາຄາເຊົ່າ, ເຟີນິເຈີ, ຮູບພາບ</li>
+            <li>ເບິ່ງອັດຕາການເຂົ້າພັກ (Occupancy) ໄດ້ທັນທີ</li>
+          </ul>
         </div>
 
-        <div class="lv-card lv-big">
-          <div class="lv-axis-y">
-            <span>30K</span><span>20K</span><span>10K</span><span>0K</span>
-          </div>
-          <div class="lv-chart">
-            <svg viewBox="0 0 420 150" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="lvAreaFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#8fb4ff" stop-opacity="0.26"/>
-                  <stop offset="100%" stop-color="#8fb4ff" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <g class="lv-grid">
-                <line x1="0" y1="10" x2="420" y2="10"/>
-                <line x1="0" y1="45" x2="420" y2="45"/>
-                <line x1="0" y1="80" x2="420" y2="80"/>
-                <line x1="0" y1="115" x2="420" y2="115"/>
-                <line x1="0" y1="148" x2="420" y2="148"/>
-              </g>
-              <path d="M0 118 C 40 108 55 96 80 100 S 130 112 155 100 S 200 70 230 78 S 275 96 300 78 S 350 40 380 46 S 405 30 420 24 L420 148 L0 148 Z" fill="url(#lvAreaFill)"/>
-              <path class="lv-line-b" d="M0 126 C 45 120 70 118 95 112 S 150 96 180 104 S 230 118 260 104 S 310 70 340 74 S 390 58 420 50"/>
-              <path class="lv-line-a" d="M0 118 C 40 108 55 96 80 100 S 130 112 155 100 S 200 70 230 78 S 275 96 300 78 S 350 40 380 46 S 405 30 420 24"/>
-              <line class="lv-marker" x1="300" y1="6" x2="300" y2="148"/>
-            </svg>
-            <span class="lv-tag">ພ.ຈ. 2026 · 14.5 ລ້ານ ₭</span>
-            <div class="lv-axis-x">
-              <span>ມ.ກ.</span><span>ກ.ພ.</span><span>ມ.ນ.</span><span>ເ.ມ.</span><span>ພ.ພ.</span>
-              <span>ມິ.ຖ.</span><span>ກ.ລ.</span><span>ສ.ຫ.</span><span>ກ.ຍ.</span><span>ຕ.ລ.</span>
-            </div>
-          </div>
+        <div class="lv-feature">
+          <span class="lv-f-num">2</span>
+          <h3>ຈັດການຜູ້ເຊົ່າ</h3>
+          <ul>
+            <li>ປະຫວັດ: ຊື່, ເບີຕິດຕໍ່, ເອກະສານຢືນຢັນຕົວຕົນ, ຜູ້ຕິດຕໍ່ສຸກເສີນ</li>
+            <li>ສັນຍາ: ມື້ເລີ່ມ/ສິ້ນສຸດ, ເງິນມັດຈຳ, ແຈ້ງເຕືອນກ່ອນໝົດອາຍຸ</li>
+            <li>ຍ້າຍເຂົ້າ/ອອກ ພ້ອມຄິດໄລ່ຄືນເງິນມັດຈຳ</li>
+          </ul>
+        </div>
+
+        <div class="lv-feature">
+          <span class="lv-f-num">3</span>
+          <h3>ຈົດມິເຕີໄຟ-ນ້ຳ</h3>
+          <ul>
+            <li>ບັນທຶກເລກມິເຕີລາຍເດືອນ, ລະບົບຄິດໜ່ວຍ ແລະ ຄ່າໃຊ້ຈ່າຍໃຫ້ເອງ</li>
+            <li>ຕັ້ງອັດຕາຄ່າໄຟ/ຄ່ານ້ຳໄດ້ເອງ</li>
+            <li>ປະຫວັດການໃຊ້ຍ້ອນຫຼັງ + ເຕືອນເມື່ອຄ່າຜິດປົກກະຕິ (ເລກນ້ອຍກວ່າເດືອນກ່ອນ)</li>
+          </ul>
+        </div>
+
+        <div class="lv-feature">
+          <span class="lv-f-num">4</span>
+          <h3>ໃບບີນເກັບເງິນ &amp; ການຊຳລະ</h3>
+          <ul>
+            <li>ສ້າງບິນອັດຕະໂນມັດ: ຄ່າເຊົ່າ + ໄຟ + ນ້ຳ + ຄ່າບໍລິການອື່ນ</li>
+            <li>ພິມ/ສົ່ງບິນຜ່ານ PDF, WhatsApp ຫຼື Line</li>
+            <li>ບັນທຶກການຊຳລະ (ເງິນສົດ/ໂອນ/QR) ແລະ ອອກໃບຮັບເງິນ</li>
+            <li>ຮອງຮັບ ₭ ບາທ ໂດລາ</li>
+          </ul>
+        </div>
+
+        <div class="lv-feature">
+          <span class="lv-f-num">5</span>
+          <h3>ຕິດຕາມຍອດຄ້າງຊຳລະ</h3>
+          <ul>
+            <li>ລາຍຊື່ຫ້ອງຄ້າງ ພ້ອມຈຳນວນເງິນ ແລະ ມື້ທີ່ເກີນກຳນົດ</li>
+            <li>ແຈ້ງເຕືອນຜູ້ເຊົ່າອັດຕະໂນມັດ ກ່ອນ/ຫຼັງຄົບກຳນົດ</li>
+            <li>ຄ່າປັບລ່າຊ້າ (ຖ້າມີ)</li>
+          </ul>
+        </div>
+
+        <div class="lv-feature">
+          <span class="lv-f-num">6</span>
+          <h3>ແຈ້ງຊ່ອມ &amp; ບຳລຸງຮັກສາ</h3>
+          <ul>
+            <li>ຜູ້ເຊົ່າ ຫຼື ຜູ້ຈັດການເປີດວຽກຊ່ອມໄດ້ ພ້ອມແນບຮູບ</li>
+            <li>ສະຖານະ: ລໍດຳເນີນການ / ກຳລັງຊ່ອມ / ສຳເລັດ</li>
+            <li>ບັນທຶກຊ່າງ ແລະ ຄ່າໃຊ້ຈ່າຍ, ເຊື່ອມເຂົ້າລາຍຈ່າຍ</li>
+          </ul>
+        </div>
+
+        <div class="lv-feature">
+          <span class="lv-f-num">7</span>
+          <h3>ລາຍງານ &amp; ກຣາຟສະຫຼຸບ</h3>
+          <ul>
+            <li>ກຣາຟລາຍຮັບ-ລາຍຈ່າຍ ລາຍເດືອນ/ປີ ແລະ ກຳໄລສຸດທິ</li>
+            <li>ສະຫຼຸບຍອດເກັບໄດ້ ທຽບກັບຍອດທີ່ຄວນໄດ້</li>
+            <li>ສົ່ງອອກ Excel / PDF</li>
+          </ul>
+        </div>
+
+        <div class="lv-feature">
+          <span class="lv-f-num">8</span>
+          <h3>ຜູ້ໃຊ້ &amp; ສິດເຂົ້າເຖິງ</h3>
+          <ul>
+            <li>ຜູ້ຈັດການ (ແກ້ໄຂໄດ້ທັງໝົດ) / ຜູ້ເບິ່ງ (ເບິ່ງໄດ້ແຕ່ແກ້ບໍ່ໄດ້)</li>
+            <li>ບັນທຶກ Log ວ່າໃຜເຮັດຫຍັງ ເມື່ອໃດ</li>
+          </ul>
+        </div>
+
+        <div class="lv-feature">
+          <span class="lv-f-num">9</span>
+          <h3>ຄົ້ນຫາແບບທັນທີ</h3>
+          <ul>
+            <li>ຄົ້ນຫາດ້ວຍເລກຫ້ອງ, ຊື່ຜູ້ເຊົ່າ, ເບີໂທ, ສະຖານະ</li>
+            <li>ກອງຕາມອາຄານ / ຊັ້ນ / ຍອດຄ້າງ</li>
+          </ul>
         </div>
 
       </div>
