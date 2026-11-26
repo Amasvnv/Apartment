@@ -514,6 +514,7 @@ document.addEventListener("DOMContentLoaded", () => {
       )
     ].join("");
     $("previewTotal").textContent = money(totalWith(inv, r, r.rent) + 0);
+    animateNumbers($("previewTotal"));
   }
 
   function renderImpact() {

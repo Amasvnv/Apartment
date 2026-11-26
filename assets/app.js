@@ -639,9 +639,9 @@ function lineChart({ labels, values, ticks = 4, max, format = (v) => v, height =
   const xlabels = labels
     .map((l, i) => `<text class="axis-text" x="${x(i)}" y="${H - 6}" text-anchor="middle">${l}</text>`)
     .join("");
-  const dotStyle = dotColor ? ` style="fill:${dotColor};stroke:${dotColor}"` : "";
+  const dotStyle = dotColor ? `;fill:${dotColor};stroke:${dotColor}` : "";
   const dots = pts
-    .map((p) => `<circle class="point" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2"${dotStyle}/>`)
+    .map((p, i) => `<circle class="point" style="--d:${Math.min(i * 70, 480)}ms${dotStyle}" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2"/>`)
     .join("");
   const area =
     pts.length > 1
@@ -656,8 +656,8 @@ function lineChart({ labels, values, ticks = 4, max, format = (v) => v, height =
       </linearGradient>
     </defs>
     ${grid}
-    ${area ? `<path d="${area}" fill="url(#${id})"/>` : ""}
-    ${pts.length > 1 ? `<path d="${smoothPath(pts)}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>` : ""}
+    ${area ? `<path class="chart-area" d="${area}" fill="url(#${id})"/>` : ""}
+    ${pts.length > 1 ? `<path class="chart-line" pathLength="1" d="${smoothPath(pts)}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>` : ""}
     ${dots}
     ${xlabels}
   </svg>`;
@@ -685,7 +685,7 @@ function barChart({ labels, values, ticks = 4, max, format = (v) => v, height = 
     const cx = padL + slot * i + slot / 2;
     const yy = y(v);
     const h = Math.max(2, H - padB - yy);
-    bars += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="5" fill="url(#${id})"/>`;
+    bars += `<rect style="--d:${Math.min(i * 60, 480)}ms" x="${(cx - bw / 2).toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="5" fill="url(#${id})"/>`;
     bars += `<text class="axis-text" x="${cx}" y="${H - 6}" text-anchor="middle">${labels[i]}</text>`;
   });
 
@@ -725,7 +725,7 @@ function groupChart({ labels, series, ticks = 4, max, format = (v) => v, height 
       const v = s.values[i];
       const yy = y(v);
       const h = Math.max(1.5, H - padB - yy);
-      bars += `<rect x="${(start + j * (bw + 4)).toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="${s.color}"/>`;
+      bars += `<rect style="--d:${Math.min((i * series.length + j) * 45, 480)}ms" x="${(start + j * (bw + 4)).toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="${s.color}"/>`;
     });
     bars += `<text class="axis-text" x="${padL + slot * i + slot / 2}" y="${H - 6}" text-anchor="middle">${lbl}</text>`;
   });
@@ -740,10 +740,10 @@ function donutChart(segments, centerLabel, centerValue, size = 190) {
   let offset = 0;
   const rings = segments
     .filter((s) => s.value > 0)
-    .map((s) => {
+    .map((s, si) => {
       const len = (s.value / total) * c;
       const dash = Math.max(len - 3, 0.8);
-      const el = `<circle cx="100" cy="100" r="${r}" fill="none" stroke="${s.color}" stroke-width="${sw}"
+      const el = `<circle class="donut-ring" style="--d:${si * 90}ms" cx="100" cy="100" r="${r}" fill="none" stroke="${s.color}" stroke-width="${sw}"
         stroke-dasharray="${dash.toFixed(2)} ${(c - dash).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"
         transform="rotate(-90 100 100)" stroke-linecap="round"/>`;
       offset += len;
@@ -757,6 +757,112 @@ function donutChart(segments, centerLabel, centerValue, size = 190) {
     </svg>
     <div class="donut-center"><span>${centerLabel}</span><strong>${centerValue}</strong></div>
   </div>`;
+}
+
+/* ---------------- ອະນິເມຊັນ UI: ຕົວເລກວິ່ງ ---------------- */
+const COUNT_SELECTOR =
+  ".stat-value, .yc-value, .hero-value, .hero-box strong, #heroRate, .donut-center strong, .d-val, .summary-line b, .d-amount, .cat-cost, .lval";
+const countRuns = new WeakMap();
+const countLast = new WeakMap();
+
+function motionAllowed() {
+  return !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
+/* ໂຕເລກຢູ່ text node ທຳອິດ — ບໍ່ທຳລາຍ <small> ຫຼື markup ອື່ນ */
+function firstNumberNode(el) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let n;
+  while ((n = walker.nextNode())) if (/\d/.test(n.nodeValue)) return n;
+  return null;
+}
+
+/* ແຕ່ງໂຕເລກໃຫ້ຄືເດີມ: ຈຸດຄັ່ນຫຼັກພັນ ແລະ ຈຳນວນທົດສະນິຍົມ */
+function formatLike(v, grouped, decimals) {
+  const s = Math.abs(v).toFixed(decimals);
+  const [ip, dp] = s.split(".");
+  const head = grouped ? ip.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ip;
+  return (v < 0 ? "-" : "") + head + (dp ? "." + dp : "");
+}
+
+function animateNumberText(el) {
+  const node = firstNumberNode(el);
+  if (!node) return;
+  const raw = node.nodeValue;
+  const m = raw.match(/\d[\d,]*(?:\.\d+)?/);
+  if (!m) return;
+  const target = Number(m[0].replace(/,/g, ""));
+  if (!Number.isFinite(target) || target < 2) return;
+  const before = raw.slice(0, m.index);
+  const after = raw.slice(m.index + m[0].length);
+  const grouped = m[0].includes(",");
+  const decimals = (m[0].split(".")[1] || "").length;
+  const prev = countRuns.get(el);
+  if (prev) cancelAnimationFrame(prev);
+  countRuns.delete(el);
+  if (!motionAllowed()) {
+    node.nodeValue = before + formatLike(target, grouped, decimals) + after;
+    countLast.set(el, target);
+    return;
+  }
+  const from = countLast.get(el) || 0;
+  if (from === target) return;
+  const start = performance.now();
+  const dur = 900;
+  const tick = (now) => {
+    const t = Math.max(0, Math.min(1, (now - start) / dur));
+    const e = 1 - Math.pow(1 - t, 3);
+    const v = from + (target - from) * e;
+    node.nodeValue = before + formatLike(v, grouped, decimals) + after;
+    countLast.set(el, v);
+    if (t < 1) countRuns.set(el, requestAnimationFrame(tick));
+    else {
+      node.nodeValue = before + formatLike(target, grouped, decimals) + after;
+      countLast.set(el, target);
+      countRuns.delete(el);
+    }
+  };
+  countRuns.set(el, requestAnimationFrame(tick));
+}
+
+function animateNumbers(root = document) {
+  if (!root) return;
+  const targets = [];
+  if (root.nodeType === 1 && root.matches && root.matches(COUNT_SELECTOR)) targets.push(root);
+  if (root.querySelectorAll) targets.push(...root.querySelectorAll(COUNT_SELECTOR));
+  targets.forEach(animateNumberText);
+}
+
+/* ເລີ່ມວິ່ງເມື່ອມີ node ໃໝ່ (childList ເທົ່ານັ້ນ — ບໍ່ຊ້ຳກັບການປ່ຽນຂໍ້ຄວາມຂອງ animation ເອງ) */
+function startNumberMotion() {
+  if (typeof MutationObserver === "undefined") return;
+  const pending = new Set();
+  let queued = false;
+  const flush = () => {
+    queued = false;
+    const nodes = [...pending];
+    pending.clear();
+    nodes.forEach((n) => animateNumbers(n));
+  };
+  new MutationObserver((muts) => {
+    muts.forEach((mu) =>
+      mu.addedNodes.forEach((n) => {
+        if (n.nodeType === 1) pending.add(n);
+      })
+    );
+    if (pending.size && !queued) {
+      queued = true;
+      requestAnimationFrame(flush);
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+}
+
+/* ຫຼິ້ນ animation ຄວາມກວ້າງຄືນ (ແຖບອັດຕາທີ່ element ບໍ່ຖືກສ້າງໃໝ່) */
+function replayGrow(el) {
+  if (!el || !motionAllowed()) return;
+  el.style.animation = "none";
+  void el.offsetWidth;
+  el.style.animation = "";
 }
 
 /* ---------------- ບັນທຶກການເຄື່ອນໄຫວ ---------------- */
@@ -1018,6 +1124,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderChrome();
     applyViewerMode();
   }
+  startNumberMotion();
   if (typeof DB !== "undefined")
     DB.ready
       .then(() => {

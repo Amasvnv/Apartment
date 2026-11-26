@@ -2393,3 +2393,60 @@ body[data-page="login"] {
 @media (max-width: 1180px) {
   .header-user .hu-role { display: none; }
 }
+
+/* ================= ອະນິເມຊັນ UI: ຕົວເລກ / ເສັ້ນກາຟ / ແທ່ງ / ວົງກົມ ================= */
+@keyframes drawLine { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes barRise { from { transform: scaleY(0); } }
+@keyframes ringDraw { from { stroke-dasharray: 0 999; } }
+@keyframes dotPop { from { opacity: 0; transform: scale(0.2); } }
+@keyframes growX { from { width: 0; } }
+
+.chart .chart-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: drawLine 1.15s cubic-bezier(0.33, 0, 0.2, 1) forwards;
+}
+.chart .chart-area { animation: fadeIn 1s ease-out 0.2s backwards; }
+.chart .point,
+.chart .dot-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform, opacity;
+  animation: dotPop 0.42s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: var(--d, 0ms);
+}
+.chart rect {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  will-change: transform;
+  animation: barRise 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: var(--d, 0ms);
+}
+.donut-wrap .donut-ring {
+  animation: ringDraw 0.95s cubic-bezier(0.33, 0, 0.2, 1) backwards;
+  animation-delay: var(--d, 0ms);
+}
+.stat .mini-bar i,
+.hero-progress .progress i,
+.yc-stack i {
+  animation: growX 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart .chart-line {
+    animation: none !important;
+    stroke-dasharray: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+  .chart .chart-area,
+  .chart .point,
+  .chart .dot-pop,
+  .chart rect,
+  .donut-wrap .donut-ring,
+  .stat .mini-bar i,
+  .hero-progress .progress i,
+  .yc-stack i {
+    animation: none !important;
+  }
+}
