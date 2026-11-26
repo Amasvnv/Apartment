@@ -11,27 +11,76 @@
 </head>
 <body data-page="login">
 
-  <form class="login-card" id="loginForm" autocomplete="off">
-    <img class="login-logo" src="assets/logo.png" alt="ເຮືອນພັກ ສຸວັນນະວົງ · Souvannavong Guesthouse">
+  <div class="login-shell">
 
-    <h1>ເຂົ້າສູ່ລະບົບ</h1>
-    <p class="login-sub">ເລືອກຊື່ຜູ້ໃຊ້ ແລ້ວໃສ່ PIN ເພື່ອເຂົ້າໃຊ້ງານ</p>
+    <section class="login-intro">
+      <div class="login-brand">
+        <img class="login-logo" src="assets/logo.png" alt="ເຮືອນພັກ ສຸວັນນະວົງ · Souvannavong Guesthouse">
+        <div class="login-brand-txt">
+          <h1>ເຮືອນພັກ ສຸວັນນະວົງ</h1>
+          <p>ລະບົບຈັດການອາພາດເມັນ — ຈັດການຫ້ອງ, ຜູ້ເຊົ່າ, ບີນ ແລະ ຄ່າໃຊ້ຈ່າຍໃນບ່ອນດຽວ</p>
+        </div>
+      </div>
 
-    <div class="field">
-      <label for="loginUser">ຜູ້ໃຊ້</label>
-      <select class="input" id="loginUser"></select>
-    </div>
+      <div class="login-feats">
+        <div class="login-feat">
+          <span class="lf-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M18 12h.01"/></svg></span>
+          <div class="lf-txt"><strong>ພາບລວມ</strong><span>ຍອດລາຍຮັບ, ອັດຕາເຊົ່າ ແລະ ກາຟລາຍເດືອນ</span></div>
+        </div>
+        <div class="login-feat">
+          <span class="lf-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
+          <div class="lf-txt"><strong>ໃບບີນເກັບເງິນ</strong><span>ອອກບີນ, ຕິດຕາມການຊຳລະ, ພິມ A5/A4</span></div>
+        </div>
+        <div class="login-feat">
+          <span class="lf-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
+          <div class="lf-txt"><strong>ຈົດມິເຕີ</strong><span>ບັນທຶກໄຟຟ້າ/ນ້ຳ ແລະ ຄິດເງິນອັດຕະໂນມັດ</span></div>
+        </div>
+        <div class="login-feat">
+          <span class="lf-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg></span>
+          <div class="lf-txt"><strong>ສ້ອມແປງ</strong><span>ແຈ້ງເປັນຫາ, ຕິດຕາມສະຖານະ ແລະ ຄ່າໃຊ້ຈ່າຍ</span></div>
+        </div>
+        <div class="login-feat">
+          <span class="lf-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <div class="lf-txt"><strong>ຜູ້ເຊົ່າ</strong><span>ຂໍ້ມູນຜູ້ເຊົ່າ, ສັນຍາ ແລະ ເງິນມັດຈຳ</span></div>
+        </div>
+        <div class="login-feat">
+          <span class="lf-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.76V5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-.76a2 2 0 0 1 1.6-1.96l5-1C9.88 1.06 11 2.16 11 3.5V4"/></svg></span>
+          <div class="lf-txt"><strong>ຫ້ອງພັກ</strong><span>ສະຖານະຫ້ອງ ແລະ ຄ່າເຊົ່າແຕ່ລະຫ້ອງ</span></div>
+        </div>
+        <div class="login-feat">
+          <span class="lf-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>
+          <div class="lf-txt"><strong>ລາຍງານ</strong><span>ສະຫຼຸບການໃຊ້ນ້ຳ/ໄຟ ແລະ ລາຍຮັບ</span></div>
+        </div>
+        <div class="login-feat">
+          <span class="lf-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <div class="lf-txt"><strong>ຜູ້ໃຊ້ ແລະ ສິດ</strong><span>ກຳນົດສິດ ເບິ່ງ/ແກ້ໄຂ/ລຶບ ແຕ່ລະໜ້າ</span></div>
+        </div>
+      </div>
 
-    <div class="field" style="margin-top:12px">
-      <label for="loginPin">PIN</label>
-      <input class="input" id="loginPin" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
-    </div>
+      <div class="login-foot">ຂໍ້ມູນເກັບໃນ Supabase · ໃຊ້ພາຍໃນອາພາດເມັນ</div>
+    </section>
 
-    <div class="login-err" id="loginErr">PIN ບໍ່ຖືກ — ລອງໃໝ່ອີກຄັ້ງ</div>
+    <form class="login-card" id="loginForm" autocomplete="off">
+      <h1>ເຂົ້າສູ່ລະບົບ</h1>
+      <p class="login-sub">ເລືອກຊື່ຜູ້ໃຊ້ ແລ້ວໃສ່ PIN ເພື່ອເຂົ້າໃຊ້ງານ</p>
 
-    <button class="btn btn-primary" type="submit" id="loginBtn">ເຂົ້າສູ່ລະບົບ</button>
-    <div class="login-hint" id="loginHint">—</div>
-  </form>
+      <div class="field">
+        <label for="loginUser">ຜູ້ໃຊ້</label>
+        <select class="input" id="loginUser"></select>
+      </div>
+
+      <div class="field" style="margin-top:12px">
+        <label for="loginPin">PIN</label>
+        <input class="input" id="loginPin" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+      </div>
+
+      <div class="login-err" id="loginErr">PIN ບໍ່ຖືກ — ລອງໃໝ່ອີກຄັ້ງ</div>
+
+      <button class="btn btn-primary" type="submit" id="loginBtn">ເຂົ້າສູ່ລະບົບ</button>
+      <div class="login-hint" id="loginHint">—</div>
+    </form>
+
+  </div>
 
 <script src="assets/data.js"></script>
 <script src="assets/app.js"></script>

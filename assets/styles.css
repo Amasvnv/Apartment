@@ -2450,3 +2450,115 @@ body[data-page="login"] {
     animation: none !important;
   }
 }
+
+/* ================= ໜ້າ login ໃໝ່: 2 ຖັນ (ຊ້າຍອະທິບາຍຟັງຊັນ · ຂວາຟອມ) ================= */
+body[data-page="login"] {
+  min-width: 0;
+  padding: 40px 24px;
+}
+.login-shell {
+  width: min(1060px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) 372px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 40px 90px -50px rgba(3, 16, 32, 0.75);
+}
+
+/* ຝັ່ງຊ້າຍ — ຍີ່ຫໍ້ + ຟັງຊັນ */
+.login-intro {
+  position: relative;
+  overflow: hidden;
+  padding: 34px 34px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  color: #e9f1fb;
+  background:
+    radial-gradient(520px 300px at 88% -12%, rgba(61, 155, 255, 0.34), transparent 62%),
+    radial-gradient(420px 260px at -8% 108%, rgba(79, 201, 255, 0.18), transparent 66%),
+    linear-gradient(150deg, #0b1e33, #0a1728 55%, #071120);
+}
+.login-brand { display: flex; align-items: center; gap: 14px; }
+.login-intro .login-logo {
+  width: 96px;
+  max-width: 96px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 5px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.9);
+}
+.login-brand-txt h1 {
+  margin: 0 0 4px;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #f2f8ff;
+}
+.login-brand-txt p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+  font-weight: 300;
+  color: #9fb6cf;
+}
+
+.login-feats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; }
+.login-feat { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+.login-feat .lf-ico {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid rgba(61, 155, 255, 0.26);
+  background: rgba(61, 155, 255, 0.16);
+  color: #7cc0ff;
+}
+.login-feat .lf-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.login-feat strong { font-size: 13px; font-weight: 600; color: #eaf3ff; }
+.login-feat .lf-txt span { font-size: 11.5px; font-weight: 300; line-height: 1.55; color: #93aac4; }
+.login-foot {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 11px;
+  font-weight: 300;
+  color: #7e94ad;
+}
+
+/* ຝັ່ງຂວາ — ຟອມເຂົ້າສູ່ລະບົບ (ເນື້ອຫາເດີມ) */
+.login-card {
+  width: auto;
+  max-width: none;
+  padding: 34px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 0;
+  border-left: 1px solid var(--border-soft);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--surface);
+}
+.login-card h1 { font-size: 20px; }
+.login-card .login-sub { margin-bottom: 20px; }
+
+@media (max-width: 980px) {
+  body[data-page="login"] { padding: 24px 16px; align-items: flex-start; }
+  .login-shell { grid-template-columns: 1fr; border-radius: 18px; }
+  .login-intro { padding: 24px 22px; gap: 18px; }
+  .login-intro .login-logo { width: 72px; max-width: 72px; }
+  .login-brand-txt h1 { font-size: 16px; }
+  .login-card { border-left: 0; border-top: 1px solid var(--border-soft); padding: 26px 22px; }
+  .login-foot { display: none; }
+}
+@media (max-width: 620px) {
+  .login-feats { grid-template-columns: 1fr; }
+}
