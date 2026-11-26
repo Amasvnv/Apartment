@@ -2470,37 +2470,15 @@ body[data-page="login"] {
   background: #ffffff;
 }
 
-/* ---------- ຖັນຊ້າຍ: ແບຣນ + ຟອມ ---------- */
+/* ---------- ຖັນຊ້າຍ: ຟອມ ---------- */
 .login-intro {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: 1fr auto;
   gap: 26px;
   padding: 36px clamp(26px, 5.2vw, 84px) 30px;
   background: #ffffff;
   color: #16233a;
 }
-
-.login-brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
-.login-intro .login-logo {
-  width: 42px;
-  height: 42px;
-  flex: 0 0 auto;
-  margin: 0;
-  padding: 0;
-  border-radius: 11px;
-  background: #fff;
-  object-fit: contain;
-  box-shadow: 0 8px 18px -14px rgba(15, 43, 91, 0.55);
-}
-.login-brand-txt { display: flex; flex-direction: column; gap: 2px; line-height: 1.35; min-width: 0; }
-.login-brand-txt strong {
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  color: #0f2b5b;
-}
-.login-brand-txt span { font-size: 11px; font-weight: 400; letter-spacing: 0.4px; color: #8d9db6; }
 
 .login-card {
   width: 100%;
