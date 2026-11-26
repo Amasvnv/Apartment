@@ -2632,14 +2632,14 @@ body[data-page="login"] {
 
 .login-terms { font-size: 11.5px; font-weight: 400; line-height: 1.7; color: #a0aec2; }
 
-/* ---------- ຖັນຂວາ: ແຜງສີຂາວ-ຟ້າ + ຮູບ + ຫົວຂໍ້ຄຸນສົມບັດ ---------- */
+/* ---------- ຖັນຂວາ: ແຜງສີຂາວ-ຟ້າ + ຫົວຂໍ້ຄຸນສົມບັດ + ຮູບ ---------- */
 .login-visual {
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 24px;
+  gap: 22px;
   padding: 40px clamp(26px, 3.6vw, 58px) 34px;
   border-left: 1px solid #e2ecfb;
   color: #0f2b5b;
@@ -2690,28 +2690,36 @@ body[data-page="login"] {
   text-transform: uppercase;
   color: #2f7df6;
 }
-.lv-facts {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 16px;
+
+/* ຄຸນສົມບັດ 9 ຂໍ້: ໄອຄອນ + ຫົວຂໍ້ ຢູ່ໃນກາຣ໌ດດຽວ */
+.lv-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
 }
-.lv-fact {
-  display: inline-flex;
+.lv-feature {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px 14px;
   border-radius: 999px;
   border: 1px solid #dbe7fa;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 10px 20px -18px rgba(24, 66, 130, 0.75);
-  font-size: 11px;
-  font-weight: 500;
-  color: #35557f;
-  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 22px -20px rgba(24, 66, 130, 0.8);
 }
-.lv-fact svg { flex: 0 0 auto; color: #2f7df6; }
+.lv-f-ic { flex: 0 0 auto; display: flex; color: #2f7df6; }
+.lv-f-ic svg { display: block; }
+.lv-feature h3 {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #23446f;
+}
 
 /* ຮູບອາພາດເມັນ: ບໍ່ມີກາຣ໌ດພື້ນຫຼັງ */
 .lv-hero { display: flex; justify-content: center; }
@@ -2727,36 +2735,6 @@ body[data-page="login"] {
   box-shadow: none;
 }
 
-/* ຫົວຂໍ້ຄຸນສົມບັດ 9 ຂໍ້: ໄອຄອນ + ຫົວຂໍ້, ຕາຕະລາງ 3 ຖັນ */
-.lv-features {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: start;
-  gap: 20px 16px;
-}
-.lv-feature { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.lv-f-ic {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  border: 1px solid #dbe7fa;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 10px 18px -16px rgba(24, 66, 130, 0.7);
-  color: #2f7df6;
-}
-.lv-f-ic svg { display: block; }
-.lv-feature h3 {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.45;
-  color: #12345f;
-}
-
 @media (max-width: 1020px) {
   .login-shell { grid-template-columns: 1fr; }
   .login-visual { display: none; }
@@ -2766,15 +2744,14 @@ body[data-page="login"] {
 }
 
 @media (max-height: 1000px) {
-  .login-visual { gap: 18px; padding: 30px clamp(24px, 3.2vw, 52px) 26px; }
+  .login-visual { gap: 16px; padding: 30px clamp(24px, 3.2vw, 52px) 26px; }
   .lv-copy h2 { font-size: clamp(24px, 2.3vw, 32px); }
+  .lv-features { gap: 8px; }
+  .lv-feature { padding: 9px 12px; gap: 8px; }
+  .lv-feature h3 { font-size: 12.5px; }
   .lv-hero img { width: min(330px, 76%); }
-  .lv-features { gap: 16px 14px; }
-  .lv-f-ic { width: 31px; height: 31px; border-radius: 9px; }
-  .lv-feature h3 { font-size: 11.5px; }
 }
 
 @media (max-height: 840px) {
   .lv-hero { display: none; }
-  .lv-facts { margin-top: 12px; }
 }
