@@ -2687,6 +2687,14 @@ body[data-page="login"] {
   line-height: 1.85;
   color: #4f6a92;
 }
+.lv-copy .lv-detail {
+  margin: 10px auto 0;
+  max-width: 440px;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.8;
+  color: #5a769d;
+}
 .lv-eyebrow {
   display: inline-block;
   margin-bottom: 14px;
@@ -2735,7 +2743,7 @@ body[data-page="login"] {
 .lv-hero { display: flex; justify-content: center; }
 .lv-hero img {
   display: block;
-  width: min(280px, 70%);
+  width: min(240px, 62%);
   -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
   mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
   height: auto;
@@ -2759,7 +2767,7 @@ body[data-page="login"] {
   .lv-features { gap: 8px; }
   .lv-feature { padding: 9px 12px; gap: 8px; }
   .lv-feature h3 { font-size: 12.5px; }
-  .lv-hero img { width: min(220px, 56%); }
+  .lv-hero img { width: min(190px, 48%); }
   .lv-logo img { width: min(196px, 50%); }
 }
 
