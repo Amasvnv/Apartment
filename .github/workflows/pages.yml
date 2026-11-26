@@ -36,10 +36,24 @@ jobs:
           cache-dependency-path: "web/package-lock.json"
 
       - name: Install web dependencies
-        run: npm ci --prefix web
+        working-directory: web
+        run: npm ci
 
       - name: Build React app
-        run: npm run build --prefix web
+        working-directory: web
+        run: |
+          set -o pipefail
+          node -v
+          npm -v
+          npm run build 2>&1 | tee ../build.log
+
+      - name: Report build failure
+        if: failure()
+        run: |
+          if [ -f build.log ]; then
+            MSG=$(tail -20 build.log | tr '\n' '|' | tr -d '\r' | sed 's/%/%25/g')
+            echo "::error title=Build log::$MSG"
+          fi
 
       - uses: actions/upload-pages-artifact@v3
         with:
