@@ -168,8 +168,9 @@ document.addEventListener("DOMContentLoaded", () => {
     select.disabled = !list.length;
     document.getElementById("loginBtn").disabled = !list.length;
     hint.textContent = list.length
-      ? "PIN ເລີ່ມຕົ້ນ 1234 — ປ່ຽນໄດ້ໃນໜ້າ ຜູ້ໃຊ້"
+      ? ""
       : "ຕ້ອງເພີ່ມຜູ້ໃຊ້ກ່ອນ — ເປີດໜ້າ users.html ຖ້າເຂົ້າລະບົບໄດ້ແລ້ວ";
+    hint.hidden = list.length > 0;
   }
 
   fill();
