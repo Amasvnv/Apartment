@@ -2714,14 +2714,18 @@ body[data-page="login"] {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
-  gap: 10px;
+  grid-auto-rows: 1fr;
+  gap: 10px 12px;
 }
 .lv-feature {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 9px;
   min-width: 0;
-  padding: 10px 14px;
+  min-height: 44px;
+  padding: 8px 12px;
+  text-align: center;
   border-radius: 999px;
   border: 1px solid #dbe7fa;
   background: none;
@@ -2743,7 +2747,7 @@ body[data-page="login"] {
 .lv-hero { display: flex; justify-content: center; }
 .lv-hero img {
   display: block;
-  width: min(210px, 54%);
+  width: min(200px, 52%);
   -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
   mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
   height: auto;
