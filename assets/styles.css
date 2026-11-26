@@ -2750,7 +2750,7 @@ body[data-page="login"] {
 }
 .lv-hero img {
   display: block;
-  width: min(380px, 88%);
+  width: min(420px, 94%);
   height: 180px;
   object-fit: cover;
   object-position: center 56%;
@@ -2774,7 +2774,7 @@ body[data-page="login"] {
   .lv-features { gap: 8px; }
   .lv-feature { padding: 9px 12px; gap: 8px; }
   .lv-feature h3 { font-size: 12.5px; }
-  .lv-hero img { width: min(270px, 74%); height: 132px; }
+  .lv-hero img { width: min(300px, 84%); height: 129px; }
   .lv-logo img { width: min(180px, 46%); }
 }
 
