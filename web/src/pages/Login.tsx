@@ -39,6 +39,8 @@ const FEATURES = [
   { icon: IconDatabase, title: "ຖານຂໍ້ມູນ", desc: "ເຊື່ອມຕໍ່ ແລະ ສຳຮອງຂໍ້ມູນ" }
 ];
 
+const MAP_URL = `${import.meta.env.BASE_URL}world-map.svg`;
+
 export default function Login() {
   const { data } = useStore();
   const { user, login } = useAuth();
@@ -70,7 +72,7 @@ export default function Login() {
   return (
     <div className="lg-page">
       <section className="lg-showcase">
-        <img className="lg-map" src="/world-map.svg" alt="" aria-hidden />
+        <img className="lg-map" src={MAP_URL} alt="" aria-hidden />
 
         <div className="lg-showcase-inner">
           <div className="lg-brand">
