@@ -1,18 +1,30 @@
 import { Box, Group, Table, Text } from "@mantine/core";
+import logoUrl from "../assets/souvannahvong-logo.webp";
+import qrUrl from "../assets/lao-qr.webp";
 import { useStore } from "../data/store";
 import type { Invoice } from "../data/types";
 import {
   ctxOf,
   extraFeesShareFor,
+  invoiceMonthKey,
   invoiceRates,
   invoiceRepair,
   invoiceTotal,
+  repairItemsFor,
+  residentPeople,
+  residentRoomCount,
   serviceCostFor,
   tenantOfRoom,
   trashCostFor,
   waterCostFor
 } from "../lib/compute";
-import { money, monthLabel, num } from "../lib/format";
+import { invoiceNoLabel, money, monthLabel, num, shortMonth } from "../lib/format";
+
+const today = () => {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+};
 
 export default function BillPaper({ invoice }: { invoice: Invoice }) {
   const { data } = useStore();
@@ -20,136 +32,215 @@ export default function BillPaper({ invoice }: { invoice: Invoice }) {
   const currency = data.settings.currency;
   const rates = invoiceRates(ctx, invoice);
   const tenant = tenantOfRoom(data.tenants, invoice.room) || data.tenants.find((item) => item.name === invoice.tenant);
+  const people = residentPeople(data.tenants);
+  const rooms = residentRoomCount(data.tenants);
+
+  // ລາຍລະອຽດຄ່າສ້ອມແປງ: ຊື່ລາຍການທີ່ແຈ້ງໃນເດືອນນີ້ ຂອງຫ້ອງນີ້
+  const repairs = repairItemsFor(ctx, invoice.room, invoiceMonthKey(invoice));
+  const repairDetail = repairs.length
+    ? `${repairs.length > 1 ? `${repairs.length} ລາຍການ: ` : ""}${repairs.map((item) => item.title).join(" · ")}`
+    : "ຕາມລາຍການທີ່ແຈ້ງ";
+  const perUnit = (value: number, unit: string) => `${money(value, currency)} / ${unit}`;
 
   const rows = [
-    { label: "ຄ່າເຊົ່າຫ້ອງ", detail: "", value: Number(invoice.rent) || 0 },
-    { label: "ຄ່າໄຟຟ້າ", detail: `${num(invoice.kwh)} kWh × ${money(rates.electricRate, currency)}`, value: (Number(invoice.kwh) || 0) * rates.electricRate },
-    { label: "ຄ່ານ້ຳປະປາ", detail: "", value: waterCostFor(ctx, invoice.room, rates) },
-    { label: "ຄ່າຂີ້ເຫຍື້ອ", detail: "", value: trashCostFor(ctx, invoice.room, rates) },
-    { label: "ຄ່າບໍລິການສ່ວນກາງ", detail: "", value: serviceCostFor(ctx, invoice.room, rates) },
-    { label: "ຄ່າສ້ອມແປງ", detail: "", value: invoiceRepair(ctx, invoice) },
-    { label: "ຄ່າບໍລິການເພີ່ມເຕີມ", detail: "", value: extraFeesShareFor(ctx, invoice.room, invoice.year, invoice.month) },
+    { label: "ຄ່າເຊົ່າຫ້ອງ", detail: perUnit(Number(invoice.rent) || 0, "ເດືອນ"), value: Number(invoice.rent) || 0 },
+    {
+      label: "ຄ່າໄຟຟ້າ",
+      detail: `${num(invoice.kwh)} kWh × ${money(rates.electricRate, currency)}`,
+      value: (Number(invoice.kwh) || 0) * rates.electricRate
+    },
+    {
+      label: "ຄ່ານ້ຳປະປາ",
+      detail: `${money(rates.waterTotal, currency)} ÷ ${people} ຄົນ`,
+      value: waterCostFor(ctx, invoice.room, rates)
+    },
+    {
+      label: "ຄ່າຂີ້ເຫຍື້ອ",
+      detail: `${money(rates.trashTotal, currency)} ÷ ${rooms} ຫ້ອງ`,
+      value: trashCostFor(ctx, invoice.room, rates)
+    },
+    {
+      label: "ຄ່າບໍລິການສ່ວນກາງ",
+      detail: `${money(rates.serviceFee, currency)} ÷ ${rooms} ຫ້ອງ`,
+      value: serviceCostFor(ctx, invoice.room, rates)
+    },
+    { label: "ຄ່າສ້ອມແປງ", detail: repairDetail, value: invoiceRepair(ctx, invoice) },
+    {
+      label: "ຄ່າບໍລິການເພີ່ມເຕີມ",
+      detail: `ຫານຕາມ ${rooms} ຫ້ອງ`,
+      value: extraFeesShareFor(ctx, invoice.room, invoice.year, invoice.month)
+    },
     { label: "ຄ່າອື່ນໆ", detail: "", value: Number(invoice.other) || 0 }
   ].filter((row) => row.value > 0);
 
   const total = invoiceTotal(ctx, invoice);
-  const note = (data.settings.monthNotes || {})[`${invoice.year}-${Number(invoice.month)}`] || "";
-  const note2 = (data.settings.monthNotes2 || {})[`${invoice.year}-${Number(invoice.month)}`] || "";
+  const paid = invoice.paid ? total : 0;
+  const due = total - paid;
+
+  const dueText = String(invoice.due || "").trim() || `10 ${shortMonth(Number(invoice.month), Number(invoice.year))}`;
+
+  const noteKey = `${invoice.year}-${Number(invoice.month)}`;
+  const note1 = (data.settings.monthNotes || {})[noteKey] || "";
+  const note2 = (data.settings.monthNotes2 || {})[noteKey] || "";
 
   return (
-    <Box
-      className="bill-paper"
-      style={{
-        background: "#fff",
-        border: "1px solid #DCE8FA",
-        borderRadius: 14,
-        padding: "22px 24px",
-        color: "#0B2545",
-        maxWidth: 560,
-        margin: "0 auto"
-      }}
-    >
-      <Group justify="space-between" align="flex-start" mb={10}>
-        <Box>
-          <Text fw={700} size="md" lh={1.25}>
-            {data.settings.name}
-          </Text>
-          <Text size="xs" c="#5A7391" maw={320}>
-            {data.settings.address}
-          </Text>
-        </Box>
-        <Box ta="right">
-          <Text size="xs" c="#5A7391">
-            ໃບບີນເກັບເງິນ
-          </Text>
-          <Text fw={600} size="sm">
-            {invoice.no}
-          </Text>
-        </Box>
-      </Group>
-
-      <Box
-        style={{
-          borderTop: "1px dashed #C9DCF5",
-          borderBottom: "1px dashed #C9DCF5",
-          padding: "8px 0",
-          marginBottom: 10
-        }}
-      >
-        <Group justify="space-between">
-          <Text size="xs">
-            ຫ້ອງ <b>{invoice.room}</b>
-          </Text>
-          <Text size="xs">ປະຈຳ {monthLabel(Number(invoice.month), Number(invoice.year))}</Text>
+    <Box className="rcp-paper bill-paper">
+      <Box className="rcp-head">
+        <Group className="rcp-brand-row" gap={14} wrap="nowrap" align="center">
+          <img src={logoUrl} alt={data.settings.name} className="rcp-logo" />
+          <Box style={{ minWidth: 0 }}>
+            <Text className="rcp-brand">{data.settings.name}</Text>
+            <Text className="rcp-addr">{data.settings.address}</Text>
+          </Box>
         </Group>
-        <Group justify="space-between" mt={2}>
-          <Text size="xs">
-            ຜູ້ເຊົ່າ <b>{invoice.tenant || tenant?.name || "—"}</b>
-          </Text>
-          <Text size="xs">ກຳນົດຊຳລະ {invoice.due || "—"}</Text>
-        </Group>
+        <Box className="rcp-tag">
+          <Text className="rcp-tag-main">ໃບບີນເກັບເງິນ</Text>
+          <Text className="rcp-tag-sub">INVOICE · ໃບແຈ້ງໜີ້ປະຈຳເດືອນ</Text>
+        </Box>
       </Box>
 
-      <Table verticalSpacing={4} horizontalSpacing={0} withRowBorders={false}>
-        <Table.Tbody>
-          {rows.map((row) => (
-            <Table.Tr key={row.label}>
-              <Table.Td pl={0}>
-                <Text size="xs">{row.label}</Text>
-                {row.detail ? (
-                  <Text size="xs" c="#8AA0BB" lh={1.2}>
-                    {row.detail}
-                  </Text>
-                ) : null}
-              </Table.Td>
-              <Table.Td ta="right" pr={0}>
-                <Text size="xs">{money(row.value, currency)}</Text>
-              </Table.Td>
-            </Table.Tr>
-          ))}
-        </Table.Tbody>
-      </Table>
+      <Box className="rcp-meta">
+        <Box className="rcp-meta-cell">
+          <span>ເລກທີ</span>
+          <b>{invoiceNoLabel(invoice.no)}</b>
+        </Box>
+        <Box className="rcp-meta-cell">
+          <span>ກຳນົດຊຳລະ</span>
+          <b>{dueText}</b>
+          <span className="rcp-meta-hint">ຊຳລະກ່ອນ ວັນທີ 10</span>
+        </Box>
+        <Box className="rcp-meta-cell">
+          <span>ຫ້ອງ</span>
+          <b>{invoice.room}</b>
+        </Box>
+        <Box className="rcp-meta-cell">
+          <span>ປະຈຳເດືອນ</span>
+          <b>{monthLabel(Number(invoice.month), Number(invoice.year))}</b>
+        </Box>
+      </Box>
 
-      <Group
-        justify="space-between"
-        mt={10}
-        pt={8}
-        style={{ borderTop: "1px dashed #C9DCF5" }}
-      >
-        <Text fw={600} size="sm">
-          ລວມທັງໝົດ
-        </Text>
-        <Text fw={700} size="md" c="#1B6FD6">
-          {money(total, currency)}
-        </Text>
-      </Group>
+      <Box className="rcp-rates">
+        <Box className="rcp-rate">
+          <Text className="rcp-rate-label">ຄ່າເຊົ່າ / ເດືອນ</Text>
+          <Text className="rcp-rate-value tnum">{money(rates.rent, currency)}</Text>
+        </Box>
+        <Box className="rcp-rate">
+          <Text className="rcp-rate-label">ຄ່າໄຟຟ້າ / kWh</Text>
+          <Text className="rcp-rate-value tnum">{money(rates.electricRate, currency)}</Text>
+        </Box>
+        <Box className="rcp-rate">
+          <Text className="rcp-rate-label">ຄ່ານ້ຳລວມ / ເດືອນ</Text>
+          <Text className="rcp-rate-value tnum">{money(rates.waterTotal, currency)}</Text>
+        </Box>
+        <Box className="rcp-rate">
+          <Text className="rcp-rate-label">ຄ່າຂີ້ເຫຍື້ອ / ເດືອນ</Text>
+          <Text className="rcp-rate-value tnum">{money(rates.trashTotal, currency)}</Text>
+        </Box>
+        <Box className="rcp-rate">
+          <Text className="rcp-rate-label">ຄ່າບໍລິການ / ເດືອນ</Text>
+          <Text className="rcp-rate-value tnum">{money(rates.serviceFee, currency)}</Text>
+        </Box>
+      </Box>
 
-      <Group justify="space-between" mt={6}>
-        <Text size="xs" c="#5A7391">
-          ສະຖານະ: {invoice.paid ? "ຊຳລະແລ້ວ" : "ຍັງບໍ່ຊຳລະ"}
-        </Text>
-        <Text size="xs" c="#5A7391">
-          ມິເຕີໄຟ {num(invoice.kwh)} kWh · ນ້ຳ {num(invoice.m3)} m³
-        </Text>
-      </Group>
-
-      {note || note2 ? (
-        <Box mt={10} pt={8} style={{ borderTop: "1px dashed #C9DCF5" }}>
-          {note ? (
-            <Text size="xs" c="#5A7391">
-              {note}
+      <Box className="rcp-body">
+        <Box className="rcp-left">
+          <Box className="rcp-payee">
+            <Text className="rcp-payee-label">ຜູ້ຊຳລະເງິນ</Text>
+            <Text className="rcp-payee-name">{invoice.tenant || tenant?.name || "—"}</Text>
+            <Text className="rcp-payee-sub">
+              ຫ້ອງ {invoice.room} · ມິເຕີໄຟ {num(invoice.kwh)} kWh · ນ້ຳ {num(invoice.m3)} m³
             </Text>
-          ) : null}
-          {note2 ? (
-            <Text size="xs" c="#5A7391">
-              {note2}
-            </Text>
-          ) : null}
+          </Box>
+
+          <Table className="rcp-table" verticalSpacing={5} horizontalSpacing={0} withRowBorders={false}>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th pl={0}>ລາຍການ ແລະ ລາຄາຕໍ່ໜ່ວຍ</Table.Th>
+                <Table.Th ta="right" pr={0}>
+                  ຈຳນວນເງິນ
+                </Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {rows.map((row) => (
+                <Table.Tr key={row.label}>
+                  <Table.Td pl={0}>
+                    <Text component="span" className="rcp-item">
+                      {row.label}
+                    </Text>
+                    {row.detail ? (
+                      <Text component="span" className="rcp-item-detail">
+                        {" · "}
+                        {row.detail}
+                      </Text>
+                    ) : null}
+                  </Table.Td>
+                  <Table.Td ta="right" pr={0}>
+                    <Text className="rcp-item tnum">{money(row.value, currency)}</Text>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Box>
+
+        <Box className="rcp-sum">
+          <Box className="rcp-sum-paid">
+            <Text className="rcp-sum-label">ຍອດທີ່ຕ້ອງຊຳລະ</Text>
+            <Text className={`rcp-sum-paid-value tnum${due === 0 ? " is-clear" : ""}`}>{money(due, currency)}</Text>
+          </Box>
+          <Group justify="space-between" align="baseline" gap={8}>
+            <Text className="rcp-sum-label">ລວມທັງໝົດ</Text>
+            <Text className="rcp-sum-total tnum">{money(total, currency)}</Text>
+          </Group>
+          <Group justify="space-between" align="baseline" gap={8}>
+            <Text className="rcp-sum-label">ຊຳລະແລ້ວ</Text>
+            <Text className="rcp-sum-balance tnum">{money(paid, currency)}</Text>
+          </Group>
+          <Text className={`rcp-status${invoice.paid ? " is-paid" : " is-due"}`}>
+            {invoice.paid ? "ຊຳລະແລ້ວ" : "ຍັງບໍ່ຊຳລະ"}
+          </Text>
+
+          <Box className="rcp-qr">
+            <img src={qrUrl} alt="QR ຊຳລະເງິນ" />
+            <Box style={{ minWidth: 0 }}>
+              <Text className="rcp-qr-title">ສະແກນເພື່ອຊຳລະ (Lao QR)</Text>
+              <Text className="rcp-qr-text">
+                ເປີດແອັບ BCEL One ຫຼື ແອັບທະນາຄານທີ່ຮອງຮັບ Lao QR ແລ້ວສະແກນ ຫຼື ໂອນເຂົ້າບັນຊີຕາມຍອດຂ້າງເທິງ.
+              </Text>
+            </Box>
+          </Box>
+
+          <Text className="rcp-status-note">ກຳນົດຊຳລະ {dueText} · ອອກໃບບີນ {today()}</Text>
+        </Box>
+      </Box>
+
+      {note1 || note2 ? (
+        <Box className="rcp-note">
+          <Text className="rcp-note-title">ໝາຍເຫດ</Text>
+          {note1 ? <Text className="rcp-note-text">{note1}</Text> : null}
+          {note2 ? <Text className="rcp-note-text">{note2}</Text> : null}
         </Box>
       ) : null}
 
-      <Text size="xs" c="#8AA0BB" ta="center" mt={10}>
-        ຂອບໃຈທີ່ຊຳລະເງິນຕາມກຳນົດ
+      <Box className="rcp-sign">
+        <Box className="rcp-sign-cell">
+          <Box className="rcp-sign-line" />
+          <Text className="rcp-sign-label">ຜູ້ອອກໃບບີນ</Text>
+        </Box>
+        <Box className="rcp-sign-date">
+          <Text className="rcp-sign-label">ວັນທີ {today()}</Text>
+        </Box>
+        <Box className="rcp-sign-cell">
+          <Box className="rcp-sign-line" />
+          <Text className="rcp-sign-label">ຜູ້ຮັບໃບບີນ</Text>
+        </Box>
+      </Box>
+
+      <Text className="rcp-thanks">
+        {invoice.paid
+          ? "ທ່ານໄດ້ຊຳລະເງິນຄົບຖ້ວນແລ້ວ · ຂໍຂອບໃຈທີ່ໃຫ້ຄວາມຮ່ວມມື"
+          : `ກະລຸນາຊຳລະກ່ອນ ວັນທີ ${dueText} · ຫາກມີຂໍ້ສົງໄສ ກະລຸນາຕິດຕໍ່ຜູ້ຈັດການ`}
       </Text>
     </Box>
   );

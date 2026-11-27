@@ -9,6 +9,7 @@ import Invoices from "./pages/Invoices";
 import Login from "./pages/Login";
 import Meter from "./pages/Meter";
 import Overview from "./pages/Overview";
+import ReceiptPrint from "./pages/ReceiptPrint";
 import Repairs from "./pages/Repairs";
 import Reports from "./pages/Reports";
 import Rooms from "./pages/Rooms";
@@ -39,6 +40,7 @@ export default function App() {
       <Route path="/bill-check" element={<BillCheck />} />
       <Route element={<RequireAuth />}>
         <Route path="/invoices/:no/print" element={<InvoicePrint />} />
+        <Route path="/invoices/:no/receipt" element={<ReceiptPrint />} />
       </Route>
       <Route element={<ProtectedLayout />}>
         <Route path="/" element={<Overview />} />

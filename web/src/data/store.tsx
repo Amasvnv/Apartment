@@ -1,4 +1,6 @@
+import { Box, Group, SimpleGrid, Skeleton, Stack, Text } from "@mantine/core";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import SkeletonCard from "../components/ui/SkeletonCard";
 import { latestInvoiceMonth, monthInvoices, ctxOf } from "../lib/compute";
 import { loadData, readConfig, saveApi, saveCached, saveSupabase } from "./storage";
 
@@ -13,6 +15,7 @@ interface StoreValue {
   month: MonthRef;
   setMonth: (month: MonthRef) => void;
   update: (mutator: (draft: AppData) => void) => void;
+  commit: (mutator: (draft: AppData) => void) => Promise<boolean>;
   save: () => Promise<boolean>;
   reload: () => Promise<void>;
   saving: boolean;
@@ -95,6 +98,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [persist]
   );
 
+  // ຄືກັບ update ແຕ່ຄືນຄ່າເປັນ promise ເພື່ອໃຫ້ປຸ່ມ ບັນທຶກ / ລຶບ ສະແດງສະຖານະ ແລະ ເສັ້ນໂຫຼດໄດ້
+  const commit = useCallback(
+    async (mutator: (draft: AppData) => void) => {
+      if (!data) return false;
+      const draft: AppData = structuredClone(data);
+      mutator(draft);
+      setData(draft);
+      return persist(draft);
+    },
+    [data, persist]
+  );
+
   const save = useCallback(async () => {
     if (!data) return false;
     return persist(structuredClone(data));
@@ -116,14 +131,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       month,
       setMonth: handleSetMonth,
       update,
+      commit,
       save,
       reload,
       saving
     };
-  }, [data, mode, rev, error, month, handleSetMonth, update, save, reload, saving]);
+  }, [data, mode, rev, error, month, handleSetMonth, update, commit, save, reload, saving]);
 
   if (!value) {
-    return <div className="app-loading">ກຳລັງໂຫຼດຂໍ້ມູນ…</div>;
+    return (
+      <Box p={{ base: "md", sm: "lg" }} maw={1200} mx="auto" role="status" aria-live="polite">
+        <Group justify="space-between" align="flex-start" mb="lg" wrap="wrap" gap="md">
+          <Stack gap={8}>
+            <Skeleton height={24} width={230} radius="sm" />
+            <Skeleton height={10} width={170} radius="xl" />
+          </Stack>
+          <Skeleton height={34} width={210} radius="md" />
+        </Group>
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </SimpleGrid>
+        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md" mt="md">
+          <SkeletonCard height={240} lines={4} />
+          <SkeletonCard height={240} lines={4} />
+        </SimpleGrid>
+        <Text size="xs" c="var(--text-muted)" mt="md">
+          ກຳລັງໂຫຼດຂໍ້ມູນ…
+        </Text>
+      </Box>
+    );
   }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

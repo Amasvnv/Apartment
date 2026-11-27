@@ -82,7 +82,7 @@ export default function Activity() {
                     </Group>
                   }
                 >
-                  <Text size="xs" c="#5A7391">
+                  <Text size="xs" c="var(--text-body)">
                     {item.detail}
                   </Text>
                   <Text size="xs" c="#9AAEC6" mt={2}>
@@ -93,7 +93,7 @@ export default function Activity() {
             })}
           </Timeline>
         ) : (
-          <Text size="sm" c="#7C93B0" ta="center" py="xl">
+          <Text size="sm" c="var(--text-muted)" ta="center" py="xl">
             ຍັງບໍ່ມີການເຄື່ອນໄຫວ
           </Text>
         )}

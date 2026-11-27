@@ -110,6 +110,7 @@ export interface Apartment {
   trashTotal: number;
   otherFees: ExtraFee[];
   extraFeesByMonth: Record<string, ExtraFee[]>;
+  tenantsByMonth: Record<string, Tenant[]>;
   meterReadings: Record<string, Record<string, number>>;
   activity: ActivityItem[];
   users: AptUser[];

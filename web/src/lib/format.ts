@@ -20,6 +20,13 @@ export function millions(n: number): string {
   return (Number(n || 0) / 1000000).toFixed(1).replace(/\.0$/, "") + " ລ້ານ";
 }
 
+// ເລກໃບບີນໃນຖານຂໍ້ມູນເປັນ INV-202612-1 — ສະແດງຜົນໃຫ້ອ່ານງ່າຍເປັນ INV-2026-12-1
+export function invoiceNoLabel(no: string): string {
+  const match = /^([A-Z]{2,})-(\d{4})(\d{2})-(.+)$/.exec(String(no || "").trim());
+  if (!match) return String(no || "");
+  return `${match[1]}-${match[2]}-${match[3]}-${match[4]}`;
+}
+
 export function monthLabel(m: number, y: number): string {
   return MONTH_FULL[m - 1] + " " + y;
 }

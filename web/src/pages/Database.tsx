@@ -43,7 +43,7 @@ export default function Database() {
 
       <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
         <Card padding="md">
-          <Text size="xs" c="#5A7391">
+          <Text size="xs" c="var(--text-body)">
             ສະຖານະ
           </Text>
           <Badge mt={6} color={mode === "local" ? "gray" : "green"} variant="light">
@@ -51,7 +51,7 @@ export default function Database() {
           </Badge>
         </Card>
         <Card padding="md">
-          <Text size="xs" c="#5A7391">
+          <Text size="xs" c="var(--text-body)">
             ຫ້ອງ / ຜູ້ເຊົ່າ
           </Text>
           <Text fw={600}>
@@ -59,7 +59,7 @@ export default function Database() {
           </Text>
         </Card>
         <Card padding="md">
-          <Text size="xs" c="#5A7391">
+          <Text size="xs" c="var(--text-body)">
             ໃບບີນ / ວຽກສ້ອມ
           </Text>
           <Text fw={600}>
@@ -67,7 +67,7 @@ export default function Database() {
           </Text>
         </Card>
         <Card padding="md">
-          <Text size="xs" c="#5A7391">
+          <Text size="xs" c="var(--text-body)">
             ຮຸ່ນຂໍ້ມູນ (rev)
           </Text>
           <Text fw={600}>{rev}</Text>
@@ -84,7 +84,7 @@ export default function Database() {
         <Title order={3} mb={4}>
           Supabase (PostgreSQL)
         </Title>
-        <Text size="sm" c="#5A7391" mb="md">
+        <Text size="sm" c="var(--text-body)" mb="md">
           ໃສ່ Project URL ແລະ anon (publishable) key. ຄ່າຈະຖືກເກັບໃນ browser ຂອງເຄື່ອງນີ້.
           ຕາຕະລາງເປີດ RLS ແລະ ເຂົ້າເຖິງຜ່ານຟັງຊັນ RPC ເທົ່ານັ້ນ — ຢ່າໃຊ້ service_role key.
         </Text>
@@ -117,11 +117,11 @@ export default function Database() {
         <Title order={3} mb={4}>
           ຖານຂໍ້ມູນ SQLite ທ້ອງຖິ່ນ
         </Title>
-        <Text size="sm" c="#5A7391">
+        <Text size="sm" c="var(--text-body)">
           ຖ້າບໍ່ຕັ້ງຄ່າ Supabase, ແອັບຈະໃຊ້ <code>/api/state</code> ຈາກ <code>server.py</code> ເຊິ່ງອ່ານ/ຂຽນ
           <code> data/apartment.db</code>. ຖ້າເປີດແບບໄຟລ໌ສະຖິຕິ ຈະໃຊ້ localStorage ແທນ.
         </Text>
-        <Text size="xs" c="#8AA0BB" mt="xs">
+        <Text size="xs" c="var(--text-muted)" mt="xs">
           ບໍລິການ: {defaultSettings().name} · ສະກຸນເງິນ {data.settings.currency}
         </Text>
       </Card>

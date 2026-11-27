@@ -1,8 +1,7 @@
 import {
   ActionIcon,
+  Box,
   Button,
-  Card,
-  Divider,
   Grid,
   Group,
   NumberInput,
@@ -12,11 +11,22 @@ import {
   Text,
   Textarea,
   TextInput,
-  Title,
   Tooltip
 } from "@mantine/core";
-import { IconDeviceFloppy, IconPlus, IconTrash } from "@tabler/icons-react";
+import {
+  IconBolt,
+  IconBuilding,
+  IconCalendarMonth,
+  IconCoin,
+  IconDeviceFloppy,
+  IconDroplet,
+  IconHome,
+  IconNotes,
+  IconPlus,
+  IconTrash
+} from "@tabler/icons-react";
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import MonthSwitcher from "../components/MonthSwitcher";
 import PageHeader from "../components/PageHeader";
 import { useAuth } from "../auth/auth";
@@ -26,6 +36,52 @@ import { ctxOf, extraFeesFor, ratesForMonth } from "../lib/compute";
 import { logActivity } from "../lib/dataOps";
 import { money, monthLabel, ratesKeyOf } from "../lib/format";
 
+const RATE_FIELDS = [
+  {
+    key: "rent",
+    label: "ຄ່າເຊົ່າ",
+    unit: "₭ / ເດືອນ",
+    tone: "#2f83e8",
+    icon: <IconHome size={15} />,
+    hint: "ຄ່າເຊົ່າພື້ນຖານຕໍ່ຫ້ອງ"
+  },
+  {
+    key: "electricRate",
+    label: "ອັດຕາໄຟຟ້າ",
+    unit: "₭ / kWh",
+    tone: "#e8a33d",
+    icon: <IconBolt size={15} />,
+    hint: "ຄິດຕາມຫົວໜ່ວຍທີ່ໃຊ້ຕົວຈິງ"
+  },
+  {
+    key: "waterTotal",
+    label: "ຄ່ານ້ຳລວມ",
+    unit: "₭ / ເດືອນ",
+    tone: "#0ea5c6",
+    icon: <IconDroplet size={15} />,
+    hint: "ຫານຕາມຈຳນວນຄົນຢູ່ປະຈຳ"
+  },
+  {
+    key: "trashTotal",
+    label: "ຄ່າຂີ້ເຫຍື້ອລວມ",
+    unit: "₭ / ເດືອນ",
+    tone: "#12a06a",
+    icon: <IconTrash size={15} />,
+    hint: "ຫານຕາມຈຳນວນຫ້ອງຢູ່ປະຈຳ"
+  },
+  {
+    key: "serviceFee",
+    label: "ຄ່າບໍລິການສ່ວນກາງ",
+    unit: "₭ / ເດືອນ",
+    tone: "#8b5cf6",
+    icon: <IconBuilding size={15} />,
+    hint: "ຫານຕາມຈຳນວນຫ້ອງ"
+  }
+] as const;
+
+type RateKey = (typeof RATE_FIELDS)[number]["key"];
+type RateForm = Record<RateKey, number>;
+
 export default function Settings() {
   const { data, update, month } = useStore();
   const { canEdit } = useAuth();
@@ -33,9 +89,10 @@ export default function Settings() {
   const { year, month: monthNumber } = month;
   const key = ratesKeyOf(year, monthNumber);
   const currency = data.settings.currency;
+  const editable = canEdit("settings");
 
   const base = data.settings;
-  const [baseForm, setBaseForm] = useState({
+  const [baseForm, setBaseForm] = useState<RateForm>({
     rent: base.rent,
     electricRate: base.electricRate,
     waterTotal: base.waterTotal,
@@ -44,7 +101,7 @@ export default function Settings() {
   });
 
   const effective = ratesForMonth(base, year, monthNumber);
-  const [monthForm, setMonthForm] = useState({ ...effective });
+  const [monthForm, setMonthForm] = useState<RateForm>({ ...effective });
   const [note1, setNote1] = useState(base.monthNotes?.[key] || "");
   const [note2, setNote2] = useState(base.monthNotes2?.[key] || "");
   const [fees, setFees] = useState<ExtraFee[]>(extraFeesFor(base, year, monthNumber));
@@ -102,135 +159,128 @@ export default function Settings() {
   };
 
   const extraTotal = fees.filter((fee) => fee.active).reduce((sum, fee) => sum + (Number(fee.amount) || 0), 0);
+  const stayingRooms = Math.max(1, ctx.tenants.filter((tenant) => tenant.stayStatus !== "away").length);
 
   return (
     <Stack gap="lg" pb="xl">
-      <PageHeader title="ຕັ້ງຄ່າອັດຕາຄ່າບໍລິການ" subtitle="ຄ່າເຊົ່າ ໄຟຟ້າ ນ້ຳ ຂີ້ເຫຍື້ອ ແລະ ຄ່າບໍລິການ" actions={<MonthSwitcher />} />
+      <PageHeader
+        title="ຕັ້ງຄ່າອັດຕາຄ່າບໍລິການ"
+        subtitle="ຄ່າເຊົ່າ ໄຟຟ້າ ນ້ຳ ຂີ້ເຫຍື້ອ ແລະ ຄ່າບໍລິການ"
+        actions={<MonthSwitcher />}
+      />
 
-      <Tabs defaultValue="base" radius="md" keepMounted={false}>
-        <Tabs.List mb="md">
-          <Tabs.Tab value="base">ອັດຕາຫຼັກ</Tabs.Tab>
-          <Tabs.Tab value="month">ອັດຕາ {monthLabel(monthNumber, year)}</Tabs.Tab>
-          <Tabs.Tab value="extras">ຂໍ້ຄວາມ & ຄ່າເພີ່ມເຕີມ</Tabs.Tab>
+      <Tabs defaultValue="base" keepMounted={false} className="set-tabs">
+        <Tabs.List>
+          <Tabs.Tab value="base" leftSection={<IconCoin size={15} />}>
+            ອັດຕາຫຼັກ
+          </Tabs.Tab>
+          <Tabs.Tab value="month" leftSection={<IconCalendarMonth size={15} />}>
+            ອັດຕາ {monthLabel(monthNumber, year)}
+          </Tabs.Tab>
+          <Tabs.Tab value="extras" leftSection={<IconNotes size={15} />}>
+            ຂໍ້ຄວາມ & ຄ່າເພີ່ມເຕີມ
+          </Tabs.Tab>
         </Tabs.List>
 
-        <Tabs.Panel value="base">
-          <Card padding="lg">
-            <Group justify="space-between" mb="md">
-              <Title order={3}>ອັດຕາທີ່ໃຊ້ທຸກເດືອນ</Title>
-              <Button leftSection={<IconDeviceFloppy size={15} />} onClick={saveBase} disabled={!canEdit("settings")}>
-                ບັນທຶກ
-              </Button>
-            </Group>
-            <Grid gutter="md">
-              <Grid.Col span={{ base: 12, sm: 6, lg: 4 }}>
-                <NumberInput
-                  label="ຄ່າເຊົ່າ (₭/ເດືອນ)"
-                  value={baseForm.rent}
-                  onChange={(value) => setBaseForm({ ...baseForm, rent: Number(value) || 0 })}
-                  min={0}
-                  thousandSeparator=","
-                  disabled={!canEdit("settings")}
-                />
-              </Grid.Col>
-              <Grid.Col span={{ base: 12, sm: 6, lg: 4 }}>
-                <NumberInput
-                  label="ອັດຕາໄຟຟ້າ (₭/kWh)"
-                  value={baseForm.electricRate}
-                  onChange={(value) => setBaseForm({ ...baseForm, electricRate: Number(value) || 0 })}
-                  min={0}
-                  thousandSeparator=","
-                  disabled={!canEdit("settings")}
-                />
-              </Grid.Col>
-              <Grid.Col span={{ base: 12, sm: 6, lg: 4 }}>
-                <NumberInput
-                  label="ຄ່ານ້ຳລວມ (₭/ເດືອນ)"
-                  description="ຫານຕາມຈຳນວນຄົນຢູ່ປະຈຳ"
-                  value={baseForm.waterTotal}
-                  onChange={(value) => setBaseForm({ ...baseForm, waterTotal: Number(value) || 0 })}
-                  min={0}
-                  thousandSeparator=","
-                  disabled={!canEdit("settings")}
-                />
-              </Grid.Col>
-              <Grid.Col span={{ base: 12, sm: 6, lg: 4 }}>
-                <NumberInput
-                  label="ຄ່າຂີ້ເຫຍື້ອລວມ (₭/ເດືອນ)"
-                  description="ຫານຕາມຈຳນວນຫ້ອງຢູ່ປະຈຳ"
-                  value={baseForm.trashTotal}
-                  onChange={(value) => setBaseForm({ ...baseForm, trashTotal: Number(value) || 0 })}
-                  min={0}
-                  thousandSeparator=","
-                  disabled={!canEdit("settings")}
-                />
-              </Grid.Col>
-              <Grid.Col span={{ base: 12, sm: 6, lg: 4 }}>
-                <NumberInput
-                  label="ຄ່າບໍລິການສ່ວນກາງ (₭/ເດືອນ)"
-                  description="ຫານຕາມຈຳນວນຫ້ອງ"
-                  value={baseForm.serviceFee}
-                  onChange={(value) => setBaseForm({ ...baseForm, serviceFee: Number(value) || 0 })}
-                  min={0}
-                  thousandSeparator=","
-                  disabled={!canEdit("settings")}
-                />
-              </Grid.Col>
-            </Grid>
-          </Card>
-        </Tabs.Panel>
+        <Tabs.Panel value="base" pt="lg">
+          <Box className="set-panel">
+            <PanelHead
+              icon={<IconCoin size={17} />}
+              title="ອັດຕາທີ່ໃຊ້ທຸກເດືອນ"
+              note="ໃຊ້ເປັນຄ່າຕັ້ງຕົ້ນໃຫ້ທຸກເດືອນ ທີ່ບໍ່ໄດ້ກຳນົດອັດຕາເດືອນໄວ້"
+              action={
+                <Button
+                  className="btn-grad"
+                  radius="xl"
+                  leftSection={<IconDeviceFloppy size={15} />}
+                  onClick={saveBase}
+                  disabled={!editable}
+                >
+                  ບັນທຶກ
+                </Button>
+              }
+            />
 
-        <Tabs.Panel value="month">
-          <Card padding="lg">
-            <Group justify="space-between" mb="md">
-              <BoxTitle title={`ອັດຕາສະເພາະ ${monthLabel(monthNumber, year)}`} note="ຖ້າບໍ່ແກ້ໄຂ ຈະໃຊ້ອັດຕາຫຼັກ" />
-              <Button leftSection={<IconDeviceFloppy size={15} />} onClick={saveMonth} disabled={!canEdit("settings")}>
-                ບັນທຶກ
-              </Button>
-            </Group>
-            <Grid gutter="md">
-              {(
-                [
-                  ["rent", "ຄ່າເຊົ່າ", "₭/ເດືອນ"],
-                  ["electricRate", "ອັດຕາໄຟຟ້າ", "₭/kWh"],
-                  ["waterTotal", "ຄ່ານ້ຳລວມ", "₭/ເດືອນ"],
-                  ["trashTotal", "ຄ່າຂີ້ເຫຍື້ອລວມ", "₭/ເດືອນ"],
-                  ["serviceFee", "ຄ່າບໍລິການສ່ວນກາງ", "₭/ເດືອນ"]
-                ] as const
-              ).map(([field, label, unit]) => (
-                <Grid.Col key={field} span={{ base: 12, sm: 6, lg: 4 }}>
-                  <NumberInput
-                    label={`${label} (${unit})`}
-                    value={monthForm[field]}
-                    onChange={(value) => setMonthForm({ ...monthForm, [field]: Number(value) || 0 })}
-                    min={0}
-                    thousandSeparator=","
-                    disabled={!canEdit("settings")}
-                  />
-                </Grid.Col>
+            <Box className="set-fields">
+              {RATE_FIELDS.map((field) => (
+                <RateField
+                  key={field.key}
+                  icon={field.icon}
+                  label={field.label}
+                  unit={field.unit}
+                  tone={field.tone}
+                  hint={field.hint}
+                  value={baseForm[field.key]}
+                  disabled={!editable}
+                  onChange={(value) => setBaseForm({ ...baseForm, [field.key]: value })}
+                />
               ))}
-            </Grid>
-          </Card>
+            </Box>
+
+            <Text className="set-foot">
+              ອັດຕາເຫຼົ່ານີ້ຖືກໃຊ້ກັບທຸກເດືອນ ຍົກເວັ້ນເດືອນທີ່ຕັ້ງອັດຕາແຍກໄວ້ໃນແທັບ “ອັດຕາເດືອນ”.
+            </Text>
+          </Box>
         </Tabs.Panel>
 
-        <Tabs.Panel value="extras">
+        <Tabs.Panel value="month" pt="lg">
+          <Box className="set-panel">
+            <PanelHead
+              icon={<IconCalendarMonth size={17} />}
+              title={`ອັດຕາສະເພາະ ${monthLabel(monthNumber, year)}`}
+              note="ຖ້າບໍ່ແກ້ໄຂ ຈະໃຊ້ອັດຕາຫຼັກຂອງທຸກເດືອນ"
+              action={
+                <Button
+                  className="btn-grad"
+                  radius="xl"
+                  leftSection={<IconDeviceFloppy size={15} />}
+                  onClick={saveMonth}
+                  disabled={!editable}
+                >
+                  ບັນທຶກ
+                </Button>
+              }
+            />
+
+            <Box className="set-fields">
+              {RATE_FIELDS.map((field) => (
+                <RateField
+                  key={field.key}
+                  icon={field.icon}
+                  label={field.label}
+                  unit={field.unit}
+                  tone={field.tone}
+                  hint={field.hint}
+                  value={monthForm[field.key]}
+                  disabled={!editable}
+                  onChange={(value) => setMonthForm({ ...monthForm, [field.key]: value })}
+                />
+              ))}
+            </Box>
+
+            <Text className="set-foot">
+              ອັດຕາໃນແທັບນີ້ໃຊ້ສະເພາະໃບບີນຂອງ {monthLabel(monthNumber, year)} ເທົ່ານັ້ນ.
+            </Text>
+          </Box>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="extras" pt="lg">
           <Grid gutter="md">
             <Grid.Col span={{ base: 12, lg: 6 }}>
-              <Card padding="lg" h="100%">
-                <Title order={3} mb="xs">
-                  ຂໍ້ຄວາມປະຈຳເດືອນ
-                </Title>
-                <Text size="xs" c="#7C93B0" mb="sm">
-                  ສະແດງຢູ່ໃບບີນເກັບເງິນຂອງ {monthLabel(monthNumber, year)}
-                </Text>
-                <Stack gap="sm">
+              <Box className="set-panel" h="100%">
+                <PanelHead
+                  icon={<IconNotes size={17} />}
+                  title="ຂໍ້ຄວາມປະຈຳເດືອນ"
+                  note={`ສະແດງຢູ່ໃບບີນເກັບເງິນຂອງ ${monthLabel(monthNumber, year)}`}
+                />
+                <Stack gap="sm" mt="md">
                   <Textarea
                     label="ຂໍ້ຄວາມ 1"
                     value={note1}
                     onChange={(event) => setNote1(event.currentTarget.value)}
                     autosize
                     minRows={2}
-                    disabled={!canEdit("settings")}
+                    disabled={!editable}
                   />
                   <Textarea
                     label="ຂໍ້ຄວາມ 2"
@@ -238,37 +288,53 @@ export default function Settings() {
                     onChange={(event) => setNote2(event.currentTarget.value)}
                     autosize
                     minRows={2}
-                    disabled={!canEdit("settings")}
+                    disabled={!editable}
                   />
-                  <Button leftSection={<IconDeviceFloppy size={15} />} onClick={saveExtras} disabled={!canEdit("settings")}>
+                  <Button
+                    className="btn-grad"
+                    radius="xl"
+                    mt={4}
+                    leftSection={<IconDeviceFloppy size={15} />}
+                    onClick={saveExtras}
+                    disabled={!editable}
+                  >
                     ບັນທຶກຂໍ້ຄວາມ ແລະ ຄ່າເພີ່ມເຕີມ
                   </Button>
                 </Stack>
-              </Card>
+              </Box>
             </Grid.Col>
 
             <Grid.Col span={{ base: 12, lg: 6 }}>
-              <Card padding="lg" h="100%">
-                <Group justify="space-between" mb="xs">
-                  <Title order={3}>ຄ່າບໍລິການເພີ່ມເຕີມ</Title>
-                  <Button
-                    size="xs"
-                    variant="light"
-                    leftSection={<IconPlus size={14} />}
-                    onClick={() => setFees([...fees, { name: "", amount: 0, active: true }])}
-                    disabled={!canEdit("settings")}
-                  >
-                    ເພີ່ມ
-                  </Button>
+              <Box className="set-panel" h="100%">
+                <PanelHead
+                  icon={<IconPlus size={17} />}
+                  title="ຄ່າບໍລິການເພີ່ມເຕີມ"
+                  note={`ຫານຕາມຈຳນວນຫ້ອງຢູ່ປະຈຳ · ລວມ ${money(extraTotal, currency)}`}
+                  action={
+                    <Button
+                      size="xs"
+                      radius="xl"
+                      variant="light"
+                      leftSection={<IconPlus size={14} />}
+                      onClick={() => setFees([...fees, { name: "", amount: 0, active: true }])}
+                      disabled={!editable}
+                    >
+                      ເພີ່ມ
+                    </Button>
+                  }
+                />
+
+                <Group className="set-fee-head" gap="xs" wrap="nowrap" mt="md">
+                  <span className="set-col">ລາຍການ</span>
+                  <span className="set-col set-col--amt">ຈຳນວນ (₭)</span>
+                  <span className="set-col set-col--sw">ເປີດ</span>
+                  <span className="set-col--x" />
                 </Group>
-                <Text size="xs" c="#7C93B0" mb="sm">
-                  ຫານຕາມຈຳນວນຫ້ອງຢູ່ປະຈຳ · ລວມທີ່ເປີດໃຊ້ {money(extraTotal, currency)}
-                </Text>
-                <Stack gap="sm">
+
+                <Stack gap={8} mt={6}>
                   {fees.map((fee, index) => (
-                    <Group key={index} align="flex-end" gap="xs" wrap="nowrap">
+                    <Group key={index} className="set-fee" gap="xs" wrap="nowrap">
                       <TextInput
-                        label={index === 0 ? "ລາຍການ" : undefined}
                         placeholder="ເຊັ່ນ ຄ່າອິນເຕີເນັດ"
                         value={fee.name}
                         onChange={(event) => {
@@ -277,10 +343,10 @@ export default function Settings() {
                           setFees(next);
                         }}
                         style={{ flex: 1 }}
-                        disabled={!canEdit("settings")}
+                        variant="unstyled"
+                        disabled={!editable}
                       />
                       <NumberInput
-                        label={index === 0 ? "ຈຳນວນ (₭)" : undefined}
                         value={fee.amount}
                         onChange={(value) => {
                           const next = [...fees];
@@ -289,8 +355,9 @@ export default function Settings() {
                         }}
                         min={0}
                         thousandSeparator=","
-                        w={130}
-                        disabled={!canEdit("settings")}
+                        w={116}
+                        variant="unstyled"
+                        disabled={!editable}
                       />
                       <Tooltip label="ເປີດໃຊ້">
                         <Switch
@@ -300,34 +367,37 @@ export default function Settings() {
                             next[index] = { ...fee, active: event.currentTarget.checked };
                             setFees(next);
                           }}
-                          mb={8}
-                          disabled={!canEdit("settings")}
+                          disabled={!editable}
                         />
                       </Tooltip>
-                      <ActionIcon
-                        color="red"
-                        variant="subtle"
-                        mb={4}
-                        onClick={() => setFees(fees.filter((_, i) => i !== index))}
-                        disabled={!canEdit("settings")}
-                        aria-label="ລຶບລາຍການ"
-                      >
-                        <IconTrash size={16} />
-                      </ActionIcon>
+                      <Tooltip label="ລຶບລາຍການ">
+                        <ActionIcon
+                          color="red"
+                          variant="subtle"
+                          radius="xl"
+                          onClick={() => setFees(fees.filter((_, i) => i !== index))}
+                          disabled={!editable}
+                          aria-label="ລຶບລາຍການ"
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      </Tooltip>
                     </Group>
                   ))}
+
                   {!fees.length ? (
-                    <Text size="sm" c="#7C93B0" ta="center" py="md">
-                      ຍັງບໍ່ມີຄ່າເພີ່ມເຕີມໃນເດືອນນີ້
-                    </Text>
+                    <Box className="set-fee-empty">
+                      <Text size="sm" c="var(--text-muted)">
+                        ຍັງບໍ່ມີຄ່າເພີ່ມເຕີມໃນເດືອນນີ້
+                      </Text>
+                    </Box>
                   ) : null}
                 </Stack>
-                <Divider my="sm" />
-                <Text size="xs" c="#8AA0BB">
-                  ຕົວຢ່າງ: ຫ້ອງທີ່ຢູ່ປະຈຳ {Math.max(1, ctx.tenants.filter((tenant) => tenant.stayStatus !== "away").length)} ຫ້ອງ
-                  → ຫ້ອງລະ {money(extraTotal / Math.max(1, ctx.tenants.filter((tenant) => tenant.stayStatus !== "away").length), currency)}
-                </Text>
-              </Card>
+
+                <Box className="set-note" mt="md">
+                  ຕົວຢ່າງ: ຫ້ອງທີ່ຢູ່ປະຈຳ {stayingRooms} ຫ້ອງ → ຫ້ອງລະ {money(extraTotal / stayingRooms, currency)}
+                </Box>
+              </Box>
             </Grid.Col>
           </Grid>
         </Tabs.Panel>
@@ -336,13 +406,69 @@ export default function Settings() {
   );
 }
 
-function BoxTitle({ title, note }: { title: string; note: string }) {
+function PanelHead({
+  icon,
+  title,
+  note,
+  action
+}: {
+  icon: ReactNode;
+  title: string;
+  note: string;
+  action?: ReactNode;
+}) {
   return (
-    <div>
-      <Text fw={600}>{title}</Text>
-      <Text size="xs" c="#7C93B0">
-        {note}
-      </Text>
-    </div>
+    <Group className="set-head" gap={12} wrap="nowrap" justify="space-between" align="center">
+      <Group gap={12} wrap="nowrap" align="center">
+        <Box className="set-head-ico">{icon}</Box>
+        <Box style={{ minWidth: 0 }}>
+          <Text className="set-head-title">{title}</Text>
+          <Text className="set-head-note">{note}</Text>
+        </Box>
+      </Group>
+      {action}
+    </Group>
+  );
+}
+
+function RateField({
+  icon,
+  label,
+  unit,
+  tone,
+  hint,
+  value,
+  onChange,
+  disabled
+}: {
+  icon: ReactNode;
+  label: string;
+  unit: string;
+  tone: string;
+  hint: string;
+  value: number;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Box className="set-field" style={{ "--tone": tone } as CSSProperties}>
+      <Group className="set-field-top" gap={8} wrap="nowrap" align="center">
+        <Box className="set-field-ico">{icon}</Box>
+        <Text className="set-field-label">{label}</Text>
+        <Text className="set-field-unit">{unit}</Text>
+      </Group>
+      <NumberInput
+        className="set-input"
+        value={value}
+        onChange={(next) => onChange(Number(next) || 0)}
+        min={0}
+        thousandSeparator=","
+        hideControls
+        variant="unstyled"
+        disabled={disabled}
+        aria-label={label}
+      />
+      <Text className="set-field-hint">{hint}</Text>
+    </Box>
   );
 }

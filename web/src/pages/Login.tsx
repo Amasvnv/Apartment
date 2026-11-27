@@ -1,49 +1,42 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  Divider,
-  Grid,
-  Group,
-  Image,
-  PasswordInput,
-  Select,
-  Stack,
-  Text,
-  ThemeIcon,
-  Title
-} from "@mantine/core";
+import { Alert, Button, Image, PasswordInput, Select, Text, UnstyledButton } from "@mantine/core";
 import {
   IconAlertCircle,
-  IconBellRinging,
+  IconArrowRight,
   IconBuilding,
   IconChartHistogram,
+  IconDatabase,
   IconFileInvoice,
   IconGauge,
+  IconHistory,
+  IconLayoutDashboard,
+  IconReceipt2,
   IconSearch,
-  IconShieldLock,
+  IconSettings,
+  IconShieldCheck,
   IconTools,
   IconUser,
+  IconUserShield,
   IconUsers
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import logoUrl from "../assets/souvannahvong-logo.webp";
-import illustrationUrl from "../assets/apartment-illustration.png";
+import logoUrl from "../assets/souvannahvong-logo-cut.webp";
 import { useAuth } from "../auth/auth";
 import { useStore } from "../data/store";
 
 const FEATURES = [
-  { icon: IconBuilding, label: "ຈັດການຫ້ອງພັກ" },
-  { icon: IconUsers, label: "ຈັດການຜູ້ເຊົ່າ" },
-  { icon: IconGauge, label: "ຈົດມິເຕີໄຟ-ນ້ຳ" },
-  { icon: IconFileInvoice, label: "ໃບບີນເກັບເງິນ & ການຊຳລະ" },
-  { icon: IconBellRinging, label: "ຕິດຕາມຍອດຄ້າງຊຳລະ" },
-  { icon: IconTools, label: "ແຈ້ງຊ່ອມ & ບຳລຸງຮັກສາ" },
-  { icon: IconChartHistogram, label: "ລາຍງານ & ກຣາຟສະຫຼຸບ" },
-  { icon: IconShieldLock, label: "ຜູ້ໃຊ້ & ສິດເຂົ້າເຖິງ" },
-  { icon: IconSearch, label: "ຄົ້ນຫາແບບທັນທີ" }
+  { icon: IconLayoutDashboard, title: "ພາບລວມ", desc: "ລາຍຮັບ–ລາຍຈ່າຍ ແລະ ກຣາຟລາຍເດືອນ" },
+  { icon: IconChartHistogram, title: "ລາຍງານ", desc: "ສະຖິຕິມິເຕີ ແລະ ລາຍຮັບ 6 ເດືອນ" },
+  { icon: IconGauge, title: "ຈົດມິເຕີ", desc: "ຈົດເລກໄຟຟ້າ–ນ້ຳ ຄິດໄລ່ອັດຕະໂນມັດ" },
+  { icon: IconReceipt2, title: "ໃບບີນເກັບເງິນ", desc: "ອອກໃບບີນ ຕິດຕາມຍອດຄ້າງ ແລະ ພິມ" },
+  { icon: IconBuilding, title: "ຫ້ອງພັກ", desc: "ສະຖານະຫ້ອງ ຄ່າເຊົ່າ ແລະ ມິເຕີລ່າສຸດ" },
+  { icon: IconUsers, title: "ຜູ້ເຊົ່າ", desc: "ສັນຍາ ເງິນມັດຈຳ ແລະ ສະຖານະພັກ" },
+  { icon: IconTools, title: "ສ້ອມແປງ", desc: "ແຈ້ງຊ່ອມ ຄວາມສຳຄັນ ແລະ ຄ່າໃຊ້ຈ່າຍ" },
+  { icon: IconSearch, title: "ກວດເບິ່ງບີນ", desc: "ຄົ້ນຫາໃບບີນດ້ວຍລະຫັດ ຫຼື ຫ້ອງ" },
+  { icon: IconHistory, title: "ການເຄື່ອນໄຫວ", desc: "ບັນທຶກການແກ້ໄຂຂໍ້ມູນລ່າສຸດ" },
+  { icon: IconUserShield, title: "ຜູ້ໃຊ້ ແລະ ສິດ", desc: "ບົດບາດ ແລະ ສິດເຂົ້າເຖິງແຕ່ລະໜ້າ" },
+  { icon: IconSettings, title: "ຕັ້ງຄ່າອັດຕາ", desc: "ຄ່າເຊົ່າ ໄຟຟ້າ ນ້ຳ ແລະ ຂີ້ເຫຍື້ອ" },
+  { icon: IconDatabase, title: "ຖານຂໍ້ມູນ", desc: "ເຊື່ອມຕໍ່ ແລະ ສຳຮອງຂໍ້ມູນ" }
 ];
 
 export default function Login() {
@@ -55,6 +48,7 @@ export default function Login() {
   const [error, setError] = useState("");
 
   const activeUsers = (data.settings.users || []).filter((item) => item.active !== false);
+  const brandName = data.settings.name || "ອາພາດເມັນ ສຸວັນນະວົງ";
 
   useEffect(() => {
     if (!userId && activeUsers.length) setUserId(activeUsers[0].id);
@@ -74,162 +68,137 @@ export default function Login() {
   };
 
   return (
-    <Box mih="100vh" p={{ base: "md", sm: 28 }} style={{ display: "flex", alignItems: "stretch" }}>
-      <Grid maw={1180} w="100%" mx="auto" gutter={{ base: "md", md: 28 }} align="stretch">
-        <Grid.Col span={{ base: 12, md: 5 }}>
-          <Card
-            radius="xl"
-            padding="xl"
-            style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}
-          >
-            <Stack gap="lg">
-              <Box>
-                <Title order={2} fw={600} c="#0B2545">
-                  ເຂົ້າສູ່ລະບົບ
-                </Title>
-                <Text size="sm" c="#5A7391" mt={6}>
-                  ເລືອກຊື່ຜູ້ໃຊ້ ແລ້ວໃສ່ PIN ເພື່ອເຂົ້າໃຊ້ງານ
-                </Text>
-              </Box>
+    <div className="lg-page">
+      <section className="lg-showcase">
+        <img className="lg-map" src="/world-map.svg" alt="" aria-hidden />
 
-              <Button
-                variant="light"
-                color="brand"
-                radius="md"
-                leftSection={<IconFileInvoice size={16} />}
-                onClick={() => navigate("/bill-check")}
-                fullWidth
-              >
-                ກວດໃບບີນເກັບເງິນ
-              </Button>
+        <div className="lg-showcase-inner">
+          <div className="lg-brand">
+            <span className="lg-mark">
+              <Image className="lg-mark-img" src={logoUrl} alt="ໂລໂກ້ ອາພາດເມັນ" fit="contain" />
+            </span>
+            <span>
+              <Text className="lg-brand-name">{brandName}</Text>
+              <Text className="lg-brand-sub">Apartment Manager</Text>
+            </span>
+          </div>
 
-              <Divider label="ຫຼື" labelPosition="center" color="#E2ECF9" />
+          <h1 className="lg-hero">
+            <span className="lg-hero-line1">ລະບົບຈັດການອາພາດເມັນ</span>
+            <span className="lg-hero-line2">ຄົບຈົບ ໃນບ່ອນດຽວ</span>
+          </h1>
 
-              <form onSubmit={submit}>
-                <Stack gap="md">
-                  <Select
-                    label="ຜູ້ໃຊ້"
-                    placeholder="ເລືອກຜູ້ໃຊ້"
-                    leftSection={<IconUser size={16} />}
-                    data={activeUsers.map((item) => ({
-                      value: item.id,
-                      label: item.role === "manager" ? `${item.name} · ຜູ້ຈັດການ` : item.name
-                    }))}
-                    value={userId || null}
-                    onChange={(value) => setUserId(value || "")}
-                    disabled={!activeUsers.length}
-                    allowDeselect={false}
-                    radius="md"
-                  />
-                  <PasswordInput
-                    label="PIN"
-                    placeholder="••••"
-                    value={pin}
-                    onChange={(event) => {
-                      setPin(event.currentTarget.value);
-                      setError("");
-                    }}
-                    inputMode="numeric"
-                    maxLength={6}
-                    radius="md"
-                    disabled={!activeUsers.length}
-                    autoFocus
-                  />
-                  {error ? (
-                    <Alert color="red" variant="light" radius="md" icon={<IconAlertCircle size={16} />}>
-                      {error}
-                    </Alert>
-                  ) : null}
-                  {!activeUsers.length ? (
-                    <Alert color="amber" variant="light" radius="md" icon={<IconAlertCircle size={16} />}>
-                      ຕ້ອງເພີ່ມຜູ້ໃຊ້ກ່ອນ — ເປີດໜ້າ ຜູ້ໃຊ້ ຖ້າເຂົ້າລະບົບໄດ້ແລ້ວ
-                    </Alert>
-                  ) : null}
-                  <Button type="submit" size="md" radius="md" fullWidth disabled={!activeUsers.length}>
-                    ເຂົ້າສູ່ລະບົບ
-                  </Button>
-                </Stack>
-              </form>
+          <p className="lg-hero-sub">
+            ຫ້ອງພັກ ຜູ້ເຊົ່າ ໃບບີນເກັບເງິນ ມິເຕີ ແລະ ວຽກສ້ອມແປງ — ເບິ່ງເຫັນ ແລະ ຈັດການໄດ້ໃນບ່ອນດຽວ.
+          </p>
 
-              <Text size="xs" c="#7C93B0" ta="center">
-                © 2026 ເຮືອນພັກ ສຸວັນນະວົງ · ຂໍ້ມູນທັງໝົດເກັບໄວ້ພາຍໃນລະບົບ
-              </Text>
-            </Stack>
-          </Card>
-        </Grid.Col>
+          <ul className="lg-feats">
+            {FEATURES.map(({ icon: Icon, title, desc }) => (
+              <li className="lg-feat" key={title}>
+                <span className="lg-feat-ico">
+                  <Icon size={17} stroke={1.7} />
+                </span>
+                <span>
+                  <Text className="lg-feat-title">{title}</Text>
+                  <Text className="lg-feat-desc">{desc}</Text>
+                </span>
+              </li>
+            ))}
+          </ul>
 
-        <Grid.Col span={{ base: 12, md: 7 }} visibleFrom="md">
-          <Card
-            radius="xl"
-            padding={34}
-            style={{
-              height: "100%",
-              border: "1px solid #DCE8FA",
-              background:
-                "radial-gradient(120% 90% at 85% 0%, #DCEBFF 0%, #EFF6FF 42%, #FFFFFF 100%)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 18
-            }}
-          >
-            <Group justify="space-between" align="flex-start" wrap="nowrap">
-              <Box>
-                <Text size="xs" fw={600} tt="uppercase" c="#3B7CEA" style={{ letterSpacing: "0.14em" }}>
-                  Apartment Manager
-                </Text>
-                <Title order={2} mt={6} c="#0B2545" maw={420}>
-                  ລະບົບຈັດການ ອາພາດເມັນ ສຸວັນນະວົງ
-                </Title>
-                <Text size="sm" c="#5A7391" mt={8} maw={460}>
-                  ລວມຫ້ອງພັກ ຜູ້ເຊົ່າ ໃບບີນເກັບເງິນ ຈົດມິເຕີ ແລະ ວຽກສ້ອມແປງ ໄວ້ໃນບ່ອນດຽວ.
-                </Text>
-              </Box>
-              <Image src={logoUrl} alt="ໂລໂກ້ ເຮືອນພັກ ສຸວັນນະວົງ" h={64} w="auto" fit="contain" />
-            </Group>
+          <div className="lg-stats">
+            <div>
+              <Text className="lg-stat-value">{data.rooms.length}</Text>
+              <Text className="lg-stat-label">ຫ້ອງພັກໃນລະບົບ</Text>
+            </div>
+            <div>
+              <Text className="lg-stat-value">12</Text>
+              <Text className="lg-stat-label">ເດືອນ ຂໍ້ມູນຕໍ່ປີ</Text>
+            </div>
+            <div>
+              <Text className="lg-stat-value">24/7</Text>
+              <Text className="lg-stat-label">ເຂົ້າເຖິງຂໍ້ມູນ</Text>
+            </div>
+          </div>
+        </div>
 
-            <Box
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                gap: 8
+        <p className="lg-copy">© 2026 {brandName} · ຂໍ້ມູນເກັບໄວ້ພາຍໃນລະບົບ</p>
+      </section>
+
+      <section className="lg-panel">
+        <div className="lg-form-wrap">
+          <div className="lg-panel-brand">
+            <img className="lg-panel-logo" src={logoUrl} alt="ໂລໂກ້ ອາພາດເມັນ" />
+            <Text className="lg-panel-name">{brandName}</Text>
+            <Text className="lg-panel-sub">Apartment Manager</Text>
+          </div>
+
+          <h2 className="lg-title">ຍິນດີຕ້ອນຮັບ</h2>
+          <p className="lg-sub">ເລືອກຊື່ຜູ້ໃຊ້ ແລ້ວໃສ່ PIN ເພື່ອເຂົ້າສູ່ລະບົບ</p>
+
+          <form onSubmit={submit} className="lg-fields">
+            <Select
+              label="ຜູ້ໃຊ້"
+              placeholder="ເລືອກຜູ້ໃຊ້"
+              leftSection={<IconUser size={16} />}
+              data={activeUsers.map((item) => ({
+                value: item.id,
+                label: item.role === "manager" ? `${item.name} · ຜູ້ຈັດການ` : item.name
+              }))}
+              value={userId || null}
+              onChange={(value) => setUserId(value || "")}
+              disabled={!activeUsers.length}
+              allowDeselect={false}
+              radius="md"
+            />
+            <PasswordInput
+              label="PIN"
+              placeholder="••••"
+              value={pin}
+              onChange={(event) => {
+                setPin(event.currentTarget.value);
+                setError("");
               }}
+              inputMode="numeric"
+              maxLength={6}
+              radius="md"
+              disabled={!activeUsers.length}
+              autoFocus
+            />
+            {error ? (
+              <Alert color="red" variant="light" radius="md" icon={<IconAlertCircle size={16} />}>
+                {error}
+              </Alert>
+            ) : null}
+            {!activeUsers.length ? (
+              <Alert color="amber" variant="light" radius="md" icon={<IconAlertCircle size={16} />}>
+                ຕ້ອງເພີ່ມຜູ້ໃຊ້ກ່ອນ — ເປີດໜ້າ ຜູ້ໃຊ້ ຖ້າເຂົ້າລະບົບໄດ້ແລ້ວ
+              </Alert>
+            ) : null}
+            <Button
+              type="submit"
+              fullWidth
+              radius="md"
+              rightSection={<IconArrowRight size={17} />}
+              disabled={!activeUsers.length}
+              className="lg-submit"
             >
-              {FEATURES.map(({ icon: Icon, label }) => (
-                <Group
-                  key={label}
-                  gap={8}
-                  wrap="nowrap"
-                  p="8px 10px"
-                  style={{
-                    background: "rgba(255,255,255,0.78)",
-                    border: "1px solid #DCE8FA",
-                    borderRadius: 10,
-                    minHeight: 46
-                  }}
-                >
-                  <ThemeIcon variant="light" color="brand" size={26} radius="md">
-                    <Icon size={14} />
-                  </ThemeIcon>
-                  <Text size="xs" fw={500} c="#2C4262" lh={1.25}>
-                    {label}
-                  </Text>
-                </Group>
-              ))}
-            </Box>
+              ເຂົ້າສູ່ລະບົບ
+            </Button>
+          </form>
 
-            <Box style={{ flex: 1, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-              <Image
-                src={illustrationUrl}
-                alt="ພາບປະກອບຕຶກອາພາດເມັນ"
-                maw={520}
-                w="100%"
-                fit="contain"
-                style={{ marginBottom: -6 }}
-              />
-            </Box>
-          </Card>
-        </Grid.Col>
-      </Grid>
-    </Box>
+          <UnstyledButton className="lg-ghost" onClick={() => navigate("/bill-check")}>
+            <IconFileInvoice size={15} />
+            <span>ກວດໃບບີນເກັບເງິນ</span>
+            <IconArrowRight size={13} />
+          </UnstyledButton>
+
+          <p className="lg-panel-foot">
+            <IconShieldCheck size={14} />
+            <span>ຂໍ້ມູນຖືກເກັບຮັກສາໄວ້ພາຍໃນລະບົບ</span>
+          </p>
+        </div>
+      </section>
+    </div>
   );
 }

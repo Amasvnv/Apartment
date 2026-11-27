@@ -18,10 +18,12 @@ import {
 import { IconEdit, IconPlus, IconTrash, IconUserShield } from "@tabler/icons-react";
 import { useState } from "react";
 import PageHeader from "../components/PageHeader";
+import ConfirmDialog, { type ConfirmState } from "../components/ui/ConfirmDialog";
 import { useAuth } from "../auth/auth";
 import { useStore } from "../data/store";
 import type { AptUser, PermAction, UserRole } from "../data/types";
 import { logActivity } from "../lib/dataOps";
+import { notifyStatus } from "../lib/notify";
 
 const ROLES: Record<UserRole, string> = {
   manager: "ຜູ້ຈັດການ",
@@ -58,7 +60,7 @@ const emptyUser = (): AptUser => ({
 });
 
 export default function Users() {
-  const { data, update } = useStore();
+  const { data, commit } = useStore();
   const { user: me, canEdit, canDelete } = useAuth();
   const [opened, setOpened] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -85,9 +87,15 @@ export default function Users() {
     setForm({ ...form, perms: { ...form.perms, [page]: [...current] } });
   };
 
-  const submit = () => {
+  const [savingForm, setSavingForm] = useState(false);
+  const [pending, setPending] = useState<AptUser | null>(null);
+  const [confirmState, setConfirmState] = useState<ConfirmState>("idle");
+  const [confirmError, setConfirmError] = useState("");
+
+  const submit = async () => {
     if (!form.name.trim()) return;
-    update((draft) => {
+    setSavingForm(true);
+    const ok = await commit((draft) => {
       if (!draft.settings.users) draft.settings.users = [];
       const index = draft.settings.users.findIndex((item) => item.id === (editingId ?? form.id));
       const next: AptUser = { ...form, name: form.name.trim() };
@@ -95,25 +103,54 @@ export default function Users() {
       else draft.settings.users.push(next);
       logActivity(draft, "users", editingId ? "ແກ້ໄຂຜູ້ໃຊ້" : "ເພີ່ມຜູ້ໃຊ້", `${next.name} · ${ROLES[next.role]}`);
     });
+    setSavingForm(false);
     setOpened(false);
+    notifyStatus(
+      ok ? "success" : "danger",
+      ok ? (editingId ? "ແກ້ໄຂຜູ້ໃຊ້ສຳເລັດ" : "ເພີ່ມຜູ້ໃຊ້ສຳເລັດ") : "ບັນທຶກບໍ່ສຳເລັດ",
+      `${form.name.trim()} · ${ROLES[form.role]}`
+    );
   };
 
   const remove = (target: AptUser) => {
     if (target.id === me?.id) return;
-    if (!window.confirm(`ລຶບຜູ້ໃຊ້ ${target.name} ອອກ?`)) return;
-    update((draft) => {
-      draft.settings.users = (draft.settings.users || []).filter((item) => item.id !== target.id);
-      logActivity(draft, "users", "ລຶບຜູ້ໃຊ້", target.name);
-    });
+    setPending(target);
+    setConfirmState("idle");
+    setConfirmError("");
   };
 
-  const toggleActive = (target: AptUser) => {
+  const confirmRemove = async () => {
+    if (!pending) return;
+    setConfirmState("busy");
+    const ok = await commit((draft) => {
+      draft.settings.users = (draft.settings.users || []).filter((item) => item.id !== pending.id);
+      logActivity(draft, "users", "ລຶບຜູ້ໃຊ້", pending.name);
+    });
+    if (!ok) {
+      setConfirmState("error");
+      setConfirmError("ບັນທຶກການລຶບບໍ່ສຳເລັດ — ກະລຸນາລອງໃໝ່");
+      return;
+    }
+    setConfirmState("done");
+    notifyStatus("success", "ລຶບຜູ້ໃຊ້ສຳເລັດ", pending.name);
+    window.setTimeout(() => {
+      setPending(null);
+      setConfirmState("idle");
+    }, 450);
+  };
+
+  const toggleActive = async (target: AptUser) => {
     if (target.id === me?.id) return;
-    update((draft) => {
+    const ok = await commit((draft) => {
       const found = (draft.settings.users || []).find((item) => item.id === target.id);
       if (found) found.active = !found.active;
       logActivity(draft, "users", found?.active ? "ເປີດໃຊ້ຜູ້ໃຊ້" : "ປິດໃຊ້ຜູ້ໃຊ້", target.name);
     });
+    notifyStatus(
+      ok ? "success" : "danger",
+      ok ? (target.active === false ? "ເປີດໃຊ້ບັນຊີແລ້ວ" : "ປິດໃຊ້ບັນຊີແລ້ວ") : "ບັນທຶກບໍ່ສຳເລັດ",
+      target.name
+    );
   };
 
   return (
@@ -153,7 +190,7 @@ export default function Users() {
                 <Table.Tr key={entry.id}>
                   <Table.Td>
                     <Text fw={500}>{entry.name}</Text>
-                    <Text size="xs" c="#8AA0BB">
+                    <Text size="xs" c="var(--text-muted)">
                       {entry.pin ? `PIN ••••` : "ຍັງບໍ່ມີ PIN"}
                     </Text>
                   </Table.Td>
@@ -166,7 +203,7 @@ export default function Users() {
                   <Table.Td ta="center">
                     <Group gap={4} justify="center">
                       {entry.role === "manager" ? (
-                        <Text size="xs" c="#5A7391">
+                        <Text size="xs" c="var(--text-body)">
                           ທຸກໜ້າ
                         </Text>
                       ) : (
@@ -245,7 +282,7 @@ export default function Users() {
           </Group>
 
           <Group gap={6}>
-            <IconUserShield size={15} color="#5A7391" />
+            <IconUserShield size={15} color="var(--text-body)" />
             <Text size="sm" fw={600}>
               ສິດເຂົ້າເຖິງ
             </Text>
@@ -276,12 +313,32 @@ export default function Users() {
             <Button variant="default" onClick={() => setOpened(false)}>
               ຍົກເລີກ
             </Button>
-            <Button onClick={submit} disabled={!form.name.trim()}>
+            <Button onClick={submit} loading={savingForm} disabled={!form.name.trim()}>
               ບັນທຶກ
             </Button>
           </Group>
         </Stack>
       </Modal>
+
+      <ConfirmDialog
+        opened={!!pending}
+        title="ລຶບຜູ້ໃຊ້ນີ້?"
+        description="ລຶບແລ້ວຈະບໍ່ສາມາດກູ້ຄືນໄດ້ ແລະ ບັນຊີນີ້ຈະເຂົ້າລະບົບບໍ່ໄດ້ອີກ."
+        confirmLabel="ລຶບຜູ້ໃຊ້"
+        busyLabel="ກຳລັງລຶບ…"
+        doneLabel="ລຶບສຳເລັດ"
+        state={confirmState}
+        error={confirmError}
+        targetIcon={<IconUserShield size={17} />}
+        targetColor="#1663c4"
+        targetTitle={pending ? pending.name : ""}
+        targetMeta={pending ? `${ROLES[pending.role]}${pending.phone ? ` · ${pending.phone}` : ""}` : ""}
+        onCancel={() => {
+          setPending(null);
+          setConfirmState("idle");
+        }}
+        onConfirm={confirmRemove}
+      />
     </Stack>
   );
 }

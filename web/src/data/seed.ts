@@ -18,6 +18,7 @@ export const defaultSettings = (): Apartment => ({
   trashTotal: 400000,
   otherFees: [],
   extraFeesByMonth: {},
+  tenantsByMonth: {},
   meterReadings: {},
   activity: [],
   users: [

@@ -17,10 +17,13 @@
     "@mantine/notifications": "^8.3.18",
     "@tabler/icons-react": "^3.53.0",
     "dayjs": "^1.11.23",
+    "html2canvas-pro": "^2.6.5",
+    "jspdf": "^4.2.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.7",
-    "recharts": "^2.15.4"
+    "recharts": "^2.15.4",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/react": "^19.3.3",

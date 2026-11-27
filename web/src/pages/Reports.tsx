@@ -84,7 +84,7 @@ export default function Reports() {
 
       <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
         <Card padding="md">
-          <Text size="xs" c="#5A7391">
+          <Text size="xs" c="var(--text-body)">
             ລາຍຮັບເດືອນນີ້
           </Text>
           <Text fw={700} size="lg">
@@ -92,7 +92,7 @@ export default function Reports() {
           </Text>
         </Card>
         <Card padding="md">
-          <Text size="xs" c="#5A7391">
+          <Text size="xs" c="var(--text-body)">
             ເກັບໄດ້
           </Text>
           <Text fw={700} size="lg" c="#12A06A">
@@ -100,7 +100,7 @@ export default function Reports() {
           </Text>
         </Card>
         <Card padding="md">
-          <Text size="xs" c="#5A7391">
+          <Text size="xs" c="var(--text-body)">
             ຍັງຄ້າງ
           </Text>
           <Text fw={700} size="lg" c="#E5484D">
@@ -108,7 +108,7 @@ export default function Reports() {
           </Text>
         </Card>
         <Card padding="md">
-          <Text size="xs" c="#5A7391">
+          <Text size="xs" c="var(--text-body)">
             ອັດຕາເກັບເງິນໄດ້
           </Text>
           <Text fw={700} size="lg" c="#1B6FD6">
@@ -154,7 +154,7 @@ export default function Reports() {
                           <span style={{ width: 8, height: 8, borderRadius: 99, background: item.color }} />
                           <Text size="xs">{item.name}</Text>
                         </Group>
-                        <Text size="xs" c="#5A7391">
+                        <Text size="xs" c="var(--text-body)">
                           {money(item.value, currency)} · {total ? Math.round((item.value / total) * 100) : 0}%
                         </Text>
                       </Group>
@@ -163,7 +163,7 @@ export default function Reports() {
                 </Stack>
               </Group>
             ) : (
-              <Text size="sm" c="#7C93B0" py="lg" ta="center">
+              <Text size="sm" c="var(--text-muted)" py="lg" ta="center">
                 ຍັງບໍ່ມີຂໍ້ມູນ
               </Text>
             )}
@@ -174,7 +174,7 @@ export default function Reports() {
           <Card padding="lg" h="100%">
             <Group justify="space-between" mb="sm">
               <Text fw={600}>ຫ້ອງທີ່ມີຍອດຄ້າງສູງສຸດ · ປີ {year}</Text>
-              <Text size="xs" c="#7C93B0">
+              <Text size="xs" c="var(--text-muted)">
                 {debts.length} ຫ້ອງ
               </Text>
             </Group>
@@ -199,7 +199,7 @@ export default function Reports() {
                 {!debts.length ? (
                   <Table.Tr>
                     <Table.Td colSpan={4}>
-                      <Text size="sm" c="#7C93B0" ta="center" py="md">
+                      <Text size="sm" c="var(--text-muted)" ta="center" py="md">
                         ບໍ່ມີຍອດຄ້າງ
                       </Text>
                     </Table.Td>

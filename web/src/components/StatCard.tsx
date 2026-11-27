@@ -27,14 +27,14 @@ export default function StatCard({ label, value, note, icon, tone = "brand", pro
   return (
     <Card padding="md" radius="lg">
       <Group justify="space-between" align="flex-start" mb={6} wrap="nowrap">
-        <Text size="xs" c="#5A7391" fw={500}>
+        <Text size="xs" c="var(--text-body)" fw={500}>
           {label}
         </Text>
         <ThemeIcon variant="light" radius="md" size={30} style={{ background: palette.soft, color: palette.solid }}>
           {icon}
         </ThemeIcon>
       </Group>
-      <Text fw={700} size="lg" c="#0B2545" lh={1.3}>
+      <Text fw={700} size="lg" c="var(--text-strong)" lh={1.3}>
         {value}
       </Text>
       {typeof progress === "number" ? (
@@ -43,7 +43,7 @@ export default function StatCard({ label, value, note, icon, tone = "brand", pro
         </Box>
       ) : null}
       {note ? (
-        <Text size="xs" c="#7C93B0" mt={4} title={hint}>
+        <Text size="xs" c="var(--text-muted)" mt={4} title={hint}>
           {note}
         </Text>
       ) : null}
