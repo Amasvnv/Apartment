@@ -3,6 +3,34 @@ import { useStore } from "../data/store";
 import type { AptUser } from "../data/types";
 
 const SESSION_KEY = "apt.session";
+const GUARD_KEY = "apt.pinguard";
+const MAX_ATTEMPTS = 5;
+const LOCK_MS = 60_000;
+
+interface Guard {
+  fails: number;
+  until: number;
+}
+
+/* ກັນການເດົາ PIN: ຜິດ 5 ຄັ້ງ → ລ໋ອກ 60 ວິນາທີ (ນັບຕໍ່ session ຂອງເຄື່ອງ) */
+function readGuard(): Guard {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(GUARD_KEY) || "null") as Guard | null;
+    if (raw && typeof raw.fails === "number" && typeof raw.until === "number") return raw;
+  } catch {
+    /* ignore */
+  }
+  return { fails: 0, until: 0 };
+}
+
+function writeGuard(guard: Guard) {
+  sessionStorage.setItem(GUARD_KEY, JSON.stringify(guard));
+}
+
+function lockMessage(until: number): string | null {
+  const left = Math.ceil((until - Date.now()) / 1000);
+  return left > 0 ? `ລອງຜິດຫຼາຍຄັ້ງ — ລໍຖ້າ ${left} ວິນາທີ ແລ້ວລອງໃໝ່` : null;
+}
 
 interface Session {
   id: string;
@@ -17,10 +45,18 @@ export function currentSession(): { id: string; name: string; role: string } | n
   return session ? { id: session.id, name: session.name, role: session.role } : null;
 }
 
+/* session ໝົດອາຍຸພາຍໃນ 12 ຊົ່ວໂມງ ເຖິງແມ່ນບໍ່ປິດ browser */
+const SESSION_MAX_MS = 12 * 60 * 60 * 1000;
+
 function readSession(): Session | null {
   try {
     const parsed = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null") as Session | null;
-    return parsed && parsed.id ? parsed : null;
+    if (!parsed || !parsed.id) return null;
+    if (!parsed.at || Date.now() - parsed.at > SESSION_MAX_MS) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -67,11 +103,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     (userId: string, pin: string): string | null => {
+      const guard = readGuard();
+      const locked = lockMessage(guard.until);
+      if (locked) return locked;
+
       const candidate = (data.settings.users || []).find((item) => item.id === userId);
       if (!candidate) return "ບໍ່ພົບຜູ້ໃຊ້";
       if (candidate.active === false) return "ຜູ້ໃຊ້ນີ້ຖືກປິດໃຊ້ງານ";
       if (!candidate.pin) return "ຜູ້ໃຊ້ນີ້ຍັງບໍ່ມີ PIN";
-      if (String(pin).replace(/\D/g, "") !== String(candidate.pin)) return "PIN ບໍ່ຖືກ — ລອງໃໝ່ອີກຄັ້ງ";
+      if (String(pin).replace(/\D/g, "") !== String(candidate.pin)) {
+        const fails = (guard.until ? 0 : guard.fails) + 1;
+        if (fails >= MAX_ATTEMPTS) {
+          writeGuard({ fails: 0, until: Date.now() + LOCK_MS });
+          return `PIN ຜິດ ${MAX_ATTEMPTS} ຄັ້ງ — ລໍຖ້າ 60 ວິນາທີ ແລ້ວລອງໃໝ່`;
+        }
+        writeGuard({ fails, until: 0 });
+        return `PIN ບໍ່ຖືກ — ລອງໃໝ່ອີກຄັ້ງ (ເຫຼືອ ${MAX_ATTEMPTS - fails} ຄັ້ງ)`;
+      }
+      writeGuard({ fails: 0, until: 0 });
       writeSession(candidate);
       setSession({ id: candidate.id, name: candidate.name, role: candidate.role, at: Date.now() });
       return null;
