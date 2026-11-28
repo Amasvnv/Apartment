@@ -219,11 +219,19 @@ export default function Meter() {
 
   const save = async () => {
     if (!room) return;
+    // ມີຂໍ້ມູນຂອງຫ້ອງນີ້ໃນເດືອນນີ້ແລ້ວ → ບໍ່ໃຫ້ບັນທຶກຊ້ຳ
+    if (existing) {
+      notifyStatus(
+        "info",
+        "ບັນທຶກບໍ່ໄດ້ · ມີຂໍ້ມູນແລ້ວ",
+        `ຫ້ອງ ${room.no} · ${monthLabel(monthNumber, year)} ມີໃບບິນ ${invoiceNoLabel(existing.no)} ແລ້ວ`
+      );
+      return;
+    }
     setSaveState("busy");
     const ok = await commit((draft) => {
-      const invoice = existing
-        ? { ...draft.invoices.find((item) => item.no === existing.no)! }
-        : emptyInvoice(year, monthNumber, room.no, tenant);
+      // ຮອດນີ້ existing ຕ້ອງບໍ່ມີແລ້ວ → ສ້າງໃບບິນໃໝ່ສະເໝີ
+      const invoice = emptyInvoice(year, monthNumber, room.no, tenant);
       invoice.kwh = elecUsage;
       invoice.m3 = waterUsage;
       invoice.rent = rent;
@@ -366,9 +374,11 @@ export default function Meter() {
             </div>
 
             <div className="mtr-foot">
-              <span className="mtr-foot-note">
-                <IconInfoCircle size={14} />
-                ຄ່ານ້ຳ / ຂີ້ເຫຍື້ອ / ບໍລິການ ຄິດຕາມຈຳນວນຫ້ອງ ແລະ ຄົນຢູ່ປະຈຳ
+              <span className={`mtr-foot-note${existing ? " is-locked" : ""}`}>
+                {existing ? <IconAlertTriangle size={17} /> : <IconInfoCircle size={17} />}
+                {existing
+                  ? `ຫ້ອງ ${room?.no} ມີຂໍ້ມູນຂອງ ${monthLabel(monthNumber, year)} ແລ້ວ — ບໍ່ສາມາດບັນທຶກຊ້ຳໄດ້`
+                  : "ຄ່ານ້ຳ / ຂີ້ເຫຍື້ອ / ບໍລິການ ຄິດຕາມຈຳນວນຫ້ອງ ແລະ ຄົນຢູ່ປະຈຳ"}
               </span>
               <Group className="mtr-save-wrap" gap={10} wrap="nowrap">
                 {saveState !== "idle" ? (
@@ -395,7 +405,7 @@ export default function Meter() {
                   leftSection={<IconDeviceFloppy size={16} />}
                   onClick={save}
                   loading={saveState === "busy"}
-                  disabled={!canEdit("meter") || !room}
+                  disabled={!canEdit("meter") || !room || !!existing}
                 >
                   ບັນທຶກ
                 </Button>

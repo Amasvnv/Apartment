@@ -1,5 +1,5 @@
 import { Box, Group, Table, Text } from "@mantine/core";
-import logoUrl from "../assets/souvannahvong-logo.webp";
+import logoUrl from "../assets/souvannahvong-logo-cut.webp";
 import qrUrl from "../assets/lao-qr.webp";
 import { useStore } from "../data/store";
 import type { Invoice } from "../data/types";

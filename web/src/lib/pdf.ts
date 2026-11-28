@@ -7,6 +7,8 @@
  */
 const PAGE = { width: 210, height: 297 };
 const MARGIN = 5;
+/** ຄວາມລະອຽດເປົ້າໝາຍຕອນພິມ (DPI) — ສູງກວ່ານີ້ໄຟລ໌ຈະໃຫຍ່ໂດຍບໍ່ຈຳເປັນ */
+const TARGET_DPI = 450;
 
 export async function savePdf(fileName: string) {
   const papers = Array.from(document.querySelectorAll<HTMLElement>(".rcp-paper"));
@@ -24,8 +26,13 @@ export async function savePdf(fileName: string) {
   const maxHeight = PAGE.height - MARGIN * 2;
 
   for (let index = 0; index < papers.length; index += 1) {
+    // ຄິດ scale ຈາກຄວາມກວ້າງຈິງຂອງເຈ້ຍ ເພື່ອໃຫ້ໄດ້ TARGET_DPI ຕອນພິມ
+    const paperWidth = papers[index].getBoundingClientRect().width || 794;
+    const neededPx = (maxWidth / 25.4) * TARGET_DPI;
+    const scale = Math.min(6, Math.max(4, Math.round((neededPx / paperWidth) * 10) / 10));
+
     const canvas = await html2canvas(papers[index], {
-      scale: 2,
+      scale,
       backgroundColor: "#ffffff",
       useCORS: true,
       logging: false,

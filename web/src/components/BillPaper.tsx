@@ -1,5 +1,5 @@
 import { Box, Group, Table, Text } from "@mantine/core";
-import logoUrl from "../assets/souvannahvong-logo.webp";
+import logoUrl from "../assets/souvannahvong-logo-cut.webp";
 import qrUrl from "../assets/lao-qr.webp";
 import { useStore } from "../data/store";
 import type { Invoice } from "../data/types";
@@ -152,7 +152,7 @@ export default function BillPaper({ invoice }: { invoice: Invoice }) {
             </Text>
           </Box>
 
-          <Table className="rcp-table" verticalSpacing={5} horizontalSpacing={0} withRowBorders={false}>
+          <Table className="rcp-table" verticalSpacing={15} horizontalSpacing={0} withRowBorders={false}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th pl={0}>ລາຍການ ແລະ ລາຄາຕໍ່ໜ່ວຍ</Table.Th>
@@ -202,12 +202,18 @@ export default function BillPaper({ invoice }: { invoice: Invoice }) {
           </Text>
 
           <Box className="rcp-qr">
-            <img src={qrUrl} alt="QR ຊຳລະເງິນ" />
-            <Box style={{ minWidth: 0 }}>
-              <Text className="rcp-qr-title">ສະແກນເພື່ອຊຳລະ (Lao QR)</Text>
-              <Text className="rcp-qr-text">
-                ເປີດແອັບ BCEL One ຫຼື ແອັບທະນາຄານທີ່ຮອງຮັບ Lao QR ແລ້ວສະແກນ ຫຼື ໂອນເຂົ້າບັນຊີຕາມຍອດຂ້າງເທິງ.
-              </Text>
+            <Box className="rcp-qr-main">
+              <img src={qrUrl} alt="QR ຊຳລະເງິນ" />
+              <Box style={{ minWidth: 0 }}>
+                <Text className="rcp-qr-title">ສະແກນເພື່ອຊຳລະ (Lao QR)</Text>
+                <Text className="rcp-qr-text">
+                  ເປີດແອັບ BCEL One ຫຼື ແອັບທະນາຄານທີ່ຮອງຮັບ Lao QR ແລ້ວສະແກນ ຫຼື ໂອນເຂົ້າບັນຊີຕາມຍອດຂ້າງເທິງ.
+                </Text>
+              </Box>
+            </Box>
+            <Box className="rcp-qr-acct-box">
+              <Text className="rcp-qr-acct">ເລກບັນຊີ : 162-12-07583553</Text>
+              <Text className="rcp-qr-acct-name">SYKEO SUVANNAVONG MRS</Text>
             </Box>
           </Box>
 
@@ -222,20 +228,6 @@ export default function BillPaper({ invoice }: { invoice: Invoice }) {
           {note2 ? <Text className="rcp-note-text">{note2}</Text> : null}
         </Box>
       ) : null}
-
-      <Box className="rcp-sign">
-        <Box className="rcp-sign-cell">
-          <Box className="rcp-sign-line" />
-          <Text className="rcp-sign-label">ຜູ້ອອກໃບບີນ</Text>
-        </Box>
-        <Box className="rcp-sign-date">
-          <Text className="rcp-sign-label">ວັນທີ {today()}</Text>
-        </Box>
-        <Box className="rcp-sign-cell">
-          <Box className="rcp-sign-line" />
-          <Text className="rcp-sign-label">ຜູ້ຮັບໃບບີນ</Text>
-        </Box>
-      </Box>
 
       <Text className="rcp-thanks">
         {invoice.paid

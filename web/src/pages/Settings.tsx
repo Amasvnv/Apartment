@@ -35,6 +35,7 @@ import type { ExtraFee } from "../data/types";
 import { ctxOf, extraFeesFor, ratesForMonth } from "../lib/compute";
 import { logActivity } from "../lib/dataOps";
 import { money, monthLabel, ratesKeyOf } from "../lib/format";
+import { notifyStatus } from "../lib/notify";
 
 const RATE_FIELDS = [
   {
@@ -83,7 +84,7 @@ type RateKey = (typeof RATE_FIELDS)[number]["key"];
 type RateForm = Record<RateKey, number>;
 
 export default function Settings() {
-  const { data, update, month } = useStore();
+  const { data, commit, month } = useStore();
   const { canEdit } = useAuth();
   const ctx = useMemo(() => ctxOf(data), [data]);
   const { year, month: monthNumber } = month;
@@ -115,8 +116,8 @@ export default function Settings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  const saveBase = () => {
-    update((draft) => {
+  const saveBase = async () => {
+    const ok = await commit((draft) => {
       draft.settings.rent = Number(baseForm.rent) || 0;
       draft.settings.electricRate = Number(baseForm.electricRate) || 0;
       draft.settings.waterTotal = Number(baseForm.waterTotal) || 0;
@@ -124,10 +125,15 @@ export default function Settings() {
       draft.settings.serviceFee = Number(baseForm.serviceFee) || 0;
       logActivity(draft, "settings", "ແກ້ໄຂອັດຕາຫຼັກ", `ຄ່າເຊົ່າ ${money(draft.settings.rent, currency)}`);
     });
+    notifyStatus(
+      ok ? "success" : "danger",
+      ok ? "ບັນທຶກອັດຕາຫຼັກສຳເລັດ" : "ບັນທຶກບໍ່ສຳເລັດ",
+      `ຄ່າເຊົ່າ ${money(Number(baseForm.rent) || 0, currency)} · ໄຟຟ້າ ${money(Number(baseForm.electricRate) || 0, currency)}/kWh`
+    );
   };
 
-  const saveMonth = () => {
-    update((draft) => {
+  const saveMonth = async () => {
+    const ok = await commit((draft) => {
       if (!draft.settings.ratesByMonth) draft.settings.ratesByMonth = {};
       draft.settings.ratesByMonth[key] = {
         rent: Number(monthForm.rent) || 0,
@@ -138,10 +144,15 @@ export default function Settings() {
       };
       logActivity(draft, "settings", "ແກ້ໄຂອັດຕາເດືອນ", monthLabel(monthNumber, year));
     });
+    notifyStatus(
+      ok ? "success" : "danger",
+      ok ? "ບັນທຶກອັດຕາເດືອນສຳເລັດ" : "ບັນທຶກບໍ່ສຳເລັດ",
+      `${monthLabel(monthNumber, year)} · ຄ່າເຊົ່າ ${money(Number(monthForm.rent) || 0, currency)}`
+    );
   };
 
-  const saveExtras = () => {
-    update((draft) => {
+  const saveExtras = async () => {
+    const ok = await commit((draft) => {
       const clean = fees
         .filter((fee) => fee.name.trim() || Number(fee.amount))
         .map((fee) => ({ name: fee.name.trim(), amount: Number(fee.amount) || 0, active: !!fee.active }));
@@ -156,6 +167,11 @@ export default function Settings() {
       else delete draft.settings.monthNotes2[key];
       logActivity(draft, "settings", "ບັນທຶກຂໍ້ຄວາມ ແລະ ຄ່າເພີ່ມເຕີມ", monthLabel(monthNumber, year));
     });
+    notifyStatus(
+      ok ? "success" : "danger",
+      ok ? "ບັນທຶກຂໍ້ຄວາມ ແລະ ຄ່າພິເສດສຳເລັດ" : "ບັນທຶກບໍ່ສຳເລັດ",
+      `${monthLabel(monthNumber, year)} · ຄ່າເພີ່ມເຕີມ ${fees.filter((fee) => fee.active).length} ລາຍການ`
+    );
   };
 
   const extraTotal = fees.filter((fee) => fee.active).reduce((sum, fee) => sum + (Number(fee.amount) || 0), 0);
