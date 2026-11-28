@@ -3,6 +3,7 @@ import type { AppData, DbMode, Invoice, Repair, Room, Tenant } from "./types";
 
 const CFG_KEY = "db.config";
 const CACHE_KEY = "db.cache";
+const TOKEN_KEY = "apt.token";
 const API_STATE = "/api/state";
 
 export interface DbConfig {
@@ -33,6 +34,177 @@ export function readConfig(): DbConfig | null {
 export function saveConfig(config: DbConfig | null) {
   if (config) localStorage.setItem(CFG_KEY, JSON.stringify(config));
   else localStorage.removeItem(CFG_KEY);
+}
+
+/* ---------------- session token (apt-api) ---------------- */
+
+let tokenCache: string | null = null;
+
+export function readToken(): string | null {
+  if (tokenCache !== null) return tokenCache;
+  try {
+    tokenCache = sessionStorage.getItem(TOKEN_KEY);
+  } catch {
+    tokenCache = null;
+  }
+  return tokenCache;
+}
+
+export function saveToken(token: string | null) {
+  tokenCache = token;
+  try {
+    if (token) sessionStorage.setItem(TOKEN_KEY, token);
+    else sessionStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+/** apt-api ຍັງບໍ່ມີ / ບໍ່ພ້ອມ — ໃຫ້ໃຊ້ເສັ້ນທາງເກົ່າ (PostgREST) ໄປກ່ອນ */
+export class ApiUnavailableError extends Error {}
+
+const LEGACY_KEY = "apt.legacy";
+const LEGACY_TTL_MS = 3 * 60 * 1000;
+const API_RETRY_MS = 60 * 1000;
+
+let apiState: "unknown" | "ok" | "down" = "unknown";
+let apiRetryAt = 0;
+
+/** ກຳລັງໃຊ້ເສັ້ນທາງເກົ່າ (ບໍ່ດົນກວ່າ 10 ນາທີ ແລ້ວລອງ apt-api ຄືນ) */
+export function isLegacyMode(): boolean {
+  try {
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (!raw) return false;
+    const at = Number(raw);
+    if (!Number.isFinite(at) || Date.now() - at > LEGACY_TTL_MS) {
+      localStorage.removeItem(LEGACY_KEY);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function setLegacyMode(on: boolean) {
+  try {
+    if (on) localStorage.setItem(LEGACY_KEY, String(Date.now()));
+    else localStorage.removeItem(LEGACY_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function markApiOk() {
+  apiState = "ok";
+  apiRetryAt = 0;
+  setLegacyMode(false);
+}
+
+function markApiDown(latchToLegacy = true) {
+  apiState = "down";
+  apiRetryAt = Date.now() + API_RETRY_MS;
+  // latch ເສັ້ນທາງເກົ່າສະເພາະຕອນຮູ້ແນ່ນອນວ່າ function ບໍ່ມີ (404/503 ຯລ)”
+  if (latchToLegacy) setLegacyMode(true);
+}
+
+function apiUsable(): boolean {
+  if (isLegacyMode()) return false;
+  if (apiState === "down" && Date.now() < apiRetryAt) return false;
+  return true;
+}
+
+function notifyUnauthorized() {
+  saveToken(null);
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("apt:unauthorized"));
+}
+
+/* ---------------- Edge Function apt-api ---------------- */
+
+function apiUrl(config: DbConfig): string {
+  const fromEnv = import.meta.env.VITE_API_URL as string | undefined;
+  if (fromEnv) return fromEnv.replace(/\/+$/, "");
+  return `${config.url.trim().replace(/\/+$/, "")}/functions/v1/apt-api`;
+}
+
+/* ສະຖານະທີ່ໝາຍວ່າ Edge Function ຍັງບໍ່ມີ / ບໍ່ພ້ອມ (ບໍ່ໄດ້ຮັບ request ແນ່ນອນ) */
+const UNAVAILABLE_STATUS = new Set([404, 405, 501, 503, 504]);
+
+async function apiCall<T>(config: DbConfig, action: string, body: Record<string, unknown> = {}): Promise<T> {
+  if (!apiUsable()) throw new ApiUnavailableError("apt-api ຍັງບໍ່ພ້ອມ");
+
+  const token = readToken();
+  let res: Response;
+  try {
+    res = await fetch(apiUrl(config), {
+      method: "POST",
+      headers: {
+        apikey: config.token,
+        Authorization: `Bearer ${config.token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({ action, ...(token ? { token } : {}), ...body })
+    });
+  } catch {
+    // ບໍ່ມີ function (CORS/404 preflight) ຫຼື ເຄືອຂ່າຍລົ້ມ → ລອງເສັ້ນທາງເກົ່າໄດ້ ແຕ່ບໍ່ latch
+    markApiDown(false);
+    throw new ApiUnavailableError("apt-api ເຊື່ອມຕໍ່ບໍ່ໄດ້");
+  }
+
+  if (UNAVAILABLE_STATUS.has(res.status)) {
+    markApiDown();
+    throw new ApiUnavailableError(`apt-api ຍັງບໍ່ພ້ອມ (HTTP ${res.status})`);
+  }
+
+  const text = await res.text();
+  let data: unknown = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+  const message = (data as { error?: string } | null)?.error;
+
+  if (res.status === 401) {
+    notifyUnauthorized();
+    throw new ApiError(401, message || "session ໝົດອາຍຸ — ເຂົ້າສູ່ລະບົບໃໝ່");
+  }
+  if (res.status === 409 && message === "conflict") {
+    throw new ApiError(409, "ຂໍ້ມູນຖືກແກ້ໄຂຈາກໜ້າອື່ນ — ກຳລັງໂຫຼດຂໍ້ມູນໃໝ່");
+  }
+  if (!res.ok) {
+    throw new ApiError(res.status, message || `apt-api HTTP ${res.status}`);
+  }
+  markApiOk();
+  return data as T;
+}
+
+/* ---------------- ເສັ້ນທາງເກົ່າ (PostgREST RPC) — ໃຊ້ຈົນກວ່າ apt-api ຈະພ້ອມ ---------------- */
+
+async function sbRpc(config: DbConfig, name: string, body: unknown): Promise<unknown> {
+  const base = config.url.trim().replace(/\/+$/, "");
+  const res = await fetch(`${base}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers: {
+      apikey: config.token,
+      Authorization: `Bearer ${config.token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Supabase HTTP ${res.status}${text ? " · " + text.slice(0, 160) : ""}`);
+  return text ? JSON.parse(text) : null;
 }
 
 function normalizeSettings(raw: Partial<AppData["settings"]> | null | undefined): AppData["settings"] {
@@ -86,24 +258,15 @@ export function saveCached(data: AppData) {
   }
 }
 
-/* ---------------- Supabase (PostgREST RPC) ---------------- */
-
-async function sbRpc(config: DbConfig, name: string, body: unknown): Promise<unknown> {
-  const base = config.url.trim().replace(/\/+$/, "");
-  const res = await fetch(`${base}/rest/v1/rpc/${name}`, {
-    method: "POST",
-    headers: {
-      apikey: config.token,
-      Authorization: `Bearer ${config.token}`,
-      "Content-Type": "application/json",
-      Accept: "application/json"
-    },
-    body: JSON.stringify(body)
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(`Supabase HTTP ${res.status}${text ? " · " + text.slice(0, 160) : ""}`);
-  return text ? JSON.parse(text) : null;
+export function clearCache() {
+  try {
+    localStorage.removeItem(CACHE_KEY);
+  } catch {
+    /* ignore */
+  }
 }
+
+/* ---------------- apt-api: load / save ---------------- */
 
 interface SupabaseRows {
   rooms?: Record<string, unknown>[];
@@ -180,10 +343,22 @@ function fromRows(rows: SupabaseRows): AppData {
   });
 }
 
-export async function loadSupabase(config: DbConfig): Promise<AppData> {
+async function legacyLoad(config: DbConfig): Promise<AppData> {
   const raw = (await sbRpc(config, "apt_load", {})) as SupabaseRows;
   if (!raw || !Array.isArray(raw.rooms)) throw new Error("Supabase ຕອບກັບຂໍ້ມູນບໍ່ຖືກຮູບແບບ");
   return fromRows(raw);
+}
+
+export async function loadSupabase(config: DbConfig): Promise<AppData> {
+  if (isLegacyMode()) return await legacyLoad(config);
+  try {
+    const raw = await apiCall<SupabaseRows>(config, "load");
+    if (!raw || !Array.isArray(raw.rooms)) throw new Error("apt-api ຕອບກັບຂໍ້ມູນບໍ່ຖືກຮູບແບບ");
+    return fromRows(raw);
+  } catch (error) {
+    if (error instanceof ApiUnavailableError) return await legacyLoad(config);
+    throw error;
+  }
 }
 
 function supabasePayload(data: AppData) {
@@ -261,14 +436,192 @@ function supabasePayload(data: AppData) {
 }
 
 export async function saveSupabase(config: DbConfig, data: AppData, rev: number): Promise<number> {
+  // ເສັ້ນທາງເກົ່າ: ຖ້າ apt-api ຍັງບໍ່ມີ (login ຕົກລົງມານີ້ແລ້ວ)
+  if (isLegacyMode()) return await legacySave(config, data, rev);
+
+  try {
+    const response = await apiCall<{ rev?: number }>(config, "save", {
+      payload: supabasePayload(data),
+      expectedRev: rev
+    });
+    return Number(response?.rev ?? rev + 1);
+  } catch (error) {
+    if (error instanceof ApiUnavailableError) {
+      // apt_save ມີ rev guard ຢູ່ແລ້ວ — ຖ້າ request ກ່ອນໜ້າໄດ້ຂຽນໄປແລ້ວ ການຂຽນຊ້ຳຈະໄດ້ conflict ແລະ ບໍ່ທັບ
+      return await legacySave(config, data, rev);
+    }
+    throw error;
+  }
+}
+
+async function legacySave(config: DbConfig, data: AppData, rev: number): Promise<number> {
   const response = (await sbRpc(config, "apt_save", {
     payload: supabasePayload(data),
     expected_rev: rev
   })) as { error?: string; rev?: number } | null;
-  if (response && response.error === "conflict") {
-    throw new Error("ຂໍ້ມູນຖືກແກ້ໄຂຈາກໜ້າອື່ນ — ກຳລັງໂຫຼດຂໍ້ມູນໃໝ່");
+  if (response?.error === "conflict") {
+    throw new ApiError(409, "ຂໍ້ມູນຖືກແກ້ໄຂຈາກໜ້າອື່ນ — ກຳລັງໂຫຼດຂໍ້ມູນໃໝ່");
   }
   return Number(response?.rev ?? rev + 1);
+}
+
+/* ---------------- apt-api: login / logout / public bill ---------------- */
+
+export interface ApiUser {
+  id: string;
+  name: string;
+  role: string;
+  perms: Record<string, string[]>;
+  active: boolean;
+  hasPin?: boolean;
+}
+
+export interface LoginResult {
+  token: string;
+  expiresAt: string;
+  user: ApiUser;
+}
+
+/** ເຂົ້າສູ່ລະບົບເສັ້ນທາງເກົ່າ: ກວດ PIN ຈາກ settings.users (ໃຊ້ຈົນກວ່າ apt-api ຈະ deploy) */
+async function loginLegacy(config: DbConfig, identifier: string, pin: string): Promise<LoginResult> {
+  const raw = (await sbRpc(config, "apt_load", {})) as {
+    settings?: { users?: (ApiUser & { pin?: string })[] };
+  };
+  const users = raw?.settings?.users ?? [];
+  const needle = identifier.trim().toLowerCase();
+  const user =
+    users.find((item) => item.id === identifier) ||
+    users.find((item) => String(item.name || "").trim().toLowerCase() === needle);
+
+  if (!user) throw new ApiError(401, "ບໍ່ພົບຜູ້ໃຊ້");
+  if (user.active === false) throw new ApiError(403, "ຜູ້ໃຊ້ນີ້ຖືກປິດໃຊ້ງານ");
+  if (!user.pin) throw new ApiError(401, "ຜູ້ໃຊ້ນີ້ຍັງບໍ່ມີ PIN — ໃຫ້ຜູ້ຈັດການຕັ້ງ PIN");
+  if (String(pin).replace(/\D/g, "") !== String(user.pin)) {
+    throw new ApiError(401, "ຊື່ຜູ້ໃຊ້ ຫຼື PIN ບໍ່ຖືກ");
+  }
+
+  setLegacyMode(true);
+  saveToken(null);
+  return {
+    token: "",
+    expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+    user: { ...user, hasPin: true }
+  };
+}
+
+export async function loginApi(config: DbConfig, identifier: string, pin: string): Promise<LoginResult> {
+  if (isLegacyMode()) return await loginLegacy(config, identifier, pin);
+
+  let result: LoginResult;
+  try {
+    result = await apiCall<LoginResult>(config, "login", { user: identifier, pin });
+  } catch (error) {
+    // ຍັງບໍ່ມີ function → ໃຫ້ເວັບທີ່ deploy ແລ້ວຍັງ login ໄດ້ແບບເກົ່າ
+    if (error instanceof ApiUnavailableError) return await loginLegacy(config, identifier, pin);
+    throw error;
+  }
+  if (!result?.token) throw new ApiError(502, "apt-api ບໍ່ໄດ້ສົ່ງ token");
+  saveToken(result.token);
+  return result;
+}
+
+export async function logoutApi(config: DbConfig | null): Promise<void> {
+  const token = readToken();
+  if (config && token && !isLegacyMode()) {
+    try {
+      await apiCall(config, "logout", {});
+    } catch {
+      /* token ໝົດອາຍຸ ຫຼື ເຄືອຂ່າຍລົ້ມ — ລຶບຝ່າຍ client ຕໍ່ */
+    }
+  }
+  saveToken(null);
+  setLegacyMode(false);
+}
+
+export interface PublicBillRoom {
+  id: string;
+  room_type: string;
+  floor: number;
+}
+
+export interface PublicBillPayload {
+  found: boolean;
+  invoice?: Record<string, unknown> | null;
+  invoices?: Record<string, unknown>[];
+  room?: PublicBillRoom | null;
+  tenant_name?: string | null;
+  tenants?: { room: string; people: number; stay_status: string }[];
+  repairs?: Record<string, unknown>[];
+  settings?: Partial<AppData["settings"]>;
+}
+
+/** ເສັ້ນທາງເກົ່າ: ດຶງຜ່ານ apt_load ແລ້ວເລືອກສະເພາະຫ້ອງ (ໃຊ້ຈົນກວ່າ apt-api ຈະ deploy) */
+async function legacyPublicBill(config: DbConfig, room: string): Promise<PublicBillPayload> {
+  const raw = (await sbRpc(config, "apt_load", {})) as SupabaseRows & {
+    settings?: AppData["settings"];
+  };
+  const roomInvoices = (raw.invoices || [])
+    .filter((item) => String(item.room) === room)
+    .sort(
+      (a, b) =>
+        Number(b.year) * 12 + Number(b.month) - (Number(a.year) * 12 + Number(a.month))
+    );
+  if (!roomInvoices.length) return { found: false };
+
+  const toRow = (item: Record<string, unknown>) => ({
+    id: item.id,
+    year: item.year,
+    month: item.month,
+    room: item.room,
+    tenant: item.tenant,
+    kwh: item.kwh,
+    m3: item.m3,
+    rent: item.rent,
+    service: item.service,
+    other: item.other_fee,
+    paid: item.paid,
+    due: item.due
+  });
+  const roomRow = (raw.rooms || []).find((item) => String(item.id) === room);
+
+  return {
+    found: true,
+    invoice: toRow(roomInvoices[0]),
+    invoices: roomInvoices.map(toRow),
+    room: roomRow
+      ? {
+          id: String(roomRow.id ?? room),
+          room_type: String(roomRow.room_type ?? "1 ຫ້ອງນອນ"),
+          floor: Number(roomRow.floor) || 1
+        }
+      : null,
+    tenant_name: String((raw.tenants || []).find((item) => String(item.room) === room)?.name ?? ""),
+    tenants: (raw.tenants || []).map((item) => ({
+      room: String(item.room ?? ""),
+      people: Number(item.people) || 1,
+      stay_status: String(item.stay_status ?? "resident")
+    })),
+    repairs: (raw.repairs || [])
+      .filter((item) => String(item.room) === room)
+      .map((item) => ({
+        id: item.id,
+        room: item.room,
+        title: item.title,
+        status: item.status,
+        reported: item.reported
+      })),
+    settings: raw.settings as Partial<AppData["settings"]>
+  };
+}
+
+export async function fetchPublicBill(config: DbConfig, room: string): Promise<PublicBillPayload> {
+  if (isLegacyMode()) return await legacyPublicBill(config, room);
+  try {
+    return await apiCall<PublicBillPayload>(config, "public_bill", { room });
+  } catch (error) {
+    if (error instanceof ApiUnavailableError) return await legacyPublicBill(config, room);
+    throw error;
+  }
 }
 
 /* ---------------- local python API (SQLite) ---------------- */
@@ -307,6 +660,10 @@ export interface LoadedData {
 export async function loadData(): Promise<LoadedData> {
   const config = readConfig();
   if (config) {
+    // ບໍ່ມີ token ແລະ ບໍ່ໄດ້ຢູ່ໃນເສັ້ນທາງເກົ່າ → ຍັງບໍ່ຕ້ອງຍິງ request (apt-api ຈະຕອບ 401)
+    if (!readToken() && !isLegacyMode()) {
+      return { data: loadCached() || seedData(), mode: "local", rev: 0 };
+    }
     try {
       const data = await loadSupabase(config);
       return { data, mode: "supabase", rev: data.rev || 0 };
@@ -316,7 +673,7 @@ export async function loadData(): Promise<LoadedData> {
         data: cached || seedData(),
         mode: "local",
         rev: 0,
-        error: error instanceof Error ? error.message : "ເຊື່ອມຕໍ່ Supabase ບໍ່ໄດ້"
+        error: error instanceof Error ? error.message : "ເຊື່ອມຕໍ່ apt-api ບໍ່ໄດ້"
       };
     }
   }

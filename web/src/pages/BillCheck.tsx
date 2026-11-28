@@ -21,12 +21,13 @@ import {
   IconSearch,
   IconShieldLock
 } from "@tabler/icons-react";
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import BillPaper from "../components/BillPaper";
-import { useStore } from "../data/store";
-import { invoiceTotal, ctxOf } from "../lib/compute";
+import { ctxOf, invoiceTotal } from "../lib/compute";
 import { money, monthLabel } from "../lib/format";
+import { fetchPublicBill, normalizeData, readConfig, type PublicBillPayload } from "../data/storage";
+import type { AppData, Invoice, Repair, Room, Tenant } from "../data/types";
 
 const STEPS: { icon: ReactNode; title: string; text: string; tone: string }[] = [
   {
@@ -49,40 +50,144 @@ const STEPS: { icon: ReactNode; title: string; text: string; tone: string }[] = 
   }
 ];
 
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+
+function toInvoice(raw: Record<string, unknown>, fallbackRoom: string): Invoice {
+  return {
+    no: String(raw.id ?? ""),
+    room: String(raw.room ?? fallbackRoom),
+    tenant: String(raw.tenant ?? ""),
+    kwh: Number(raw.kwh) || 0,
+    m3: Number(raw.m3) || 0,
+    rent: Number(raw.rent) || 0,
+    service: Number(raw.service) || 0,
+    other: Number(raw.other) || 0,
+    paid: !!raw.paid,
+    due: String(raw.due ?? ""),
+    year: Number(raw.year) || 0,
+    month: Number(raw.month) || 0
+  };
+}
+
+/** ປະກອບເປັນ AppData ພໍສຳລັບພິມໃບບີນ — ບໍ່ມີຂໍ້ມູນຫ້ອງອື່ນ ຫຼື ຜູ້ໃຊ້ */
+function buildPublicData(payload: PublicBillPayload, room: string): AppData | null {
+  if (!payload.found) return null;
+  const raw = asRecord(payload.invoice);
+  if (!raw.id && !raw.room) return null;
+
+  const invoice = toInvoice(raw, room);
+  const invoices = (payload.invoices?.length ? payload.invoices : [raw]).map((item) =>
+    toInvoice(asRecord(item), room)
+  );
+  const tenants: Tenant[] = (payload.tenants ?? []).map((item) => ({
+    name: String(item.room) === invoice.room ? String(payload.tenant_name ?? "") : "",
+    phone: "",
+    room: String(item.room),
+    contract: "",
+    moveIn: "",
+    people: Math.max(1, Number(item.people) || 1),
+    deposit: 0,
+    rent: 0,
+    stayStatus: item.stay_status === "away" ? "away" : "resident"
+  }));
+  const rooms: Room[] = [
+    {
+      no: invoice.room,
+      floor: Number(payload.room?.floor) || 1,
+      type: payload.room?.room_type || "1 ຫ້ອງນອນ",
+      rent: invoice.rent,
+      status: "occupied",
+      tenant: payload.tenant_name ?? null,
+      phone: null,
+      meterElec: 0,
+      meterWater: 0
+    }
+  ];
+  const repairs: Repair[] = (payload.repairs ?? []).map((item) => {
+    const row = asRecord(item);
+    return {
+      id: String(row.id ?? ""),
+      room: String(row.room ?? invoice.room),
+      title: String(row.title ?? ""),
+      category: "other",
+      priority: "normal",
+      status: (row.status as Repair["status"]) || "open",
+      assignee: "",
+      phone: "",
+      cost: 0,
+      reported: String(row.reported ?? ""),
+      due: "",
+      done: "",
+      note: ""
+    };
+  });
+
+  return normalizeData({
+    rooms,
+    tenants,
+    invoices,
+    repairs,
+    settings: payload.settings as AppData["settings"] | undefined,
+    rev: 0
+  });
+}
+
 export default function BillCheck() {
-  const { data } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const initialRoom = new URLSearchParams(location.search).get("room") || "";
   const [room, setRoom] = useState(initialRoom);
   const [query, setQuery] = useState(initialRoom);
+  const [payload, setPayload] = useState<PublicBillPayload | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const ctx = useMemo(() => ctxOf(data), [data]);
-  const invoices = useMemo(
-    () =>
-      data.invoices
-        .filter((invoice) => String(invoice.room) === String(query))
-        .sort((a, b) => Number(b.year) * 12 + Number(b.month) - (Number(a.year) * 12 + Number(a.month))),
-    [data.invoices, query]
-  );
-  const invoice = invoices[0];
-  const tenant = data.tenants.find((item) => String(item.room) === String(query));
-  const roomExamples = [...data.rooms]
-    .sort((a, b) => a.no.localeCompare(b.no, undefined, { numeric: true }))
-    .slice(0, 3)
-    .map((item) => item.no);
+  useEffect(() => {
+    const code = query.trim();
+    if (!code) {
+      setPayload(null);
+      setError("");
+      return;
+    }
 
-  const total = invoice ? invoiceTotal(ctx, invoice) : 0;
+    const config = readConfig();
+    if (!config) {
+      setPayload(null);
+      setError("ຍັງບໍ່ໄດ້ເຊື່ອມຕໍ່ຖານຂໍ້ມູນ");
+      return;
+    }
+
+    let alive = true;
+    setLoading(true);
+    setError("");
+    fetchPublicBill(config, code)
+      .then((result) => {
+        if (alive) setPayload(result);
+      })
+      .catch((err: unknown) => {
+        if (!alive) return;
+        setPayload(null);
+        setError(err instanceof Error ? err.message : "ໂຫຼດໃບບີນບໍ່ສຳເລັດ");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [query]);
+
+  const data = useMemo(() => (payload ? buildPublicData(payload, query.trim()) : null), [payload, query]);
+  const invoice = data?.invoices[0] ?? null;
+  const total = data && invoice ? invoiceTotal(ctxOf(data), invoice) : 0;
   const settled = !!invoice?.paid;
+  const brandName = data?.settings.name || "ອາພາດເມັນ";
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     setQuery(room.trim());
-  };
-
-  const pickRoom = (no: string) => {
-    setRoom(no);
-    setQuery(no);
   };
 
   return (
@@ -95,7 +200,7 @@ export default function BillCheck() {
             </ThemeIcon>
             <Box style={{ minWidth: 0 }}>
               <Text fw={700} c="var(--text-strong)" truncate>
-                {data.settings.name}
+                {brandName}
               </Text>
               <Text size="xs" c="var(--text-muted)" truncate>
                 ເບິ່ງໃບບີນ ແລະ ສະຖານະການຊຳລະ
@@ -131,14 +236,18 @@ export default function BillCheck() {
                   <Group align="flex-end" gap="sm" wrap="nowrap" mt="md">
                     <TextInput
                       label="ເລກຫ້ອງ"
-                      placeholder={roomExamples[0] ? `ເຊັ່ນ ${roomExamples[0]}` : "ເຊັ່ນ 101"}
+                      placeholder="ເຊັ່ນ 101"
                       leftSection={<IconFileInvoice size={15} />}
                       value={room}
                       size="md"
                       radius="md"
                       onChange={(event) => {
-                        setRoom(event.currentTarget.value);
-                        if (!event.currentTarget.value) setQuery("");
+                        const value = event.currentTarget.value;
+                        setRoom(value);
+                        if (!value.trim()) {
+                          setQuery("");
+                          setPayload(null);
+                        }
                       }}
                       style={{ flex: 1 }}
                       className="bc-input"
@@ -148,15 +257,6 @@ export default function BillCheck() {
                     </Button>
                   </Group>
                 </form>
-
-                <Group gap={6} mt="md" wrap="wrap" align="center">
-                  <Text className="bc-hint-label">ລອງ:</Text>
-                  {(roomExamples.length ? roomExamples : ["101", "102", "201"]).map((no) => (
-                    <button key={no} type="button" className="bc-chip" onClick={() => pickRoom(no)}>
-                      ຫ້ອງ {no}
-                    </button>
-                  ))}
-                </Group>
               </Box>
 
               <Box className="bc-foot">
@@ -199,13 +299,25 @@ export default function BillCheck() {
         </Grid>
 
         <Box maw={720} mx="auto" mt="lg">
-          {query && !invoice ? (
+          {error ? (
+            <Alert color="red" variant="light" radius="md" title="ໂຫຼດໃບບີນບໍ່ສຳເລັດ">
+              {error}
+            </Alert>
+          ) : null}
+
+          {loading ? (
+            <Text size="sm" c="var(--text-muted)" ta="center" py="md">
+              ກຳລັງໂຫຼດໃບບີນ…
+            </Text>
+          ) : null}
+
+          {query && !loading && !error && payload && !payload.found ? (
             <Alert color="amber" variant="light" radius="md" title={`ບໍ່ພົບໃບບີນຂອງຫ້ອງ ${query}`}>
               ກະລຸນາກວດເລກຫ້ອງອີກຄັ້ງ ຫຼື ຕິດຕໍ່ຜູ້ຈັດການ
             </Alert>
           ) : null}
 
-          {invoice ? (
+          {invoice && data ? (
             <Stack gap="sm" className="bc-result">
               <Box
                 className={`bc-result-head no-print${settled ? " is-paid" : " is-due"}`}
@@ -215,7 +327,7 @@ export default function BillCheck() {
                   <Box style={{ minWidth: 0 }}>
                     <Text className="bc-result-eyebrow">ໃບບີນລ່າສຸດ · ຫ້ອງ {invoice.room}</Text>
                     <Text className="bc-result-name" truncate>
-                      {tenant?.name || invoice.tenant || "ບໍ່ມີຜູ້ເຊົ່າ"}
+                      {invoice.tenant || "ບໍ່ມີຜູ້ເຊົ່າ"}
                     </Text>
                     <Text className="bc-result-sub">
                       ປະຈຳເດືອນ {monthLabel(invoice.month, invoice.year)} · ລວມ {money(total, data.settings.currency)}
@@ -232,7 +344,7 @@ export default function BillCheck() {
                   </Group>
                 </Group>
               </Box>
-              <BillPaper invoice={invoice} />
+              <BillPaper invoice={invoice} data={data} />
             </Stack>
           ) : null}
         </Box>

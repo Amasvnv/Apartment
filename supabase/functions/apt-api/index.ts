@@ -327,27 +327,39 @@ async function login({ body, ip }: Ctx) {
     throw new HttpError(503, "ຍັງບໍ່ໄດ້ຕັ້ງຄ່າ app_users — ໃຫ້ run bootstrap_users ກ່ອນ");
   }
 
-  const userId = String(body.userId ?? "").trim();
+  // ຮັບໄດ້ທັງ id ແລະ ຊື່ (client ໃຊ້ຊ່ອງດຽວ) — ບໍ່ມີ endpoint ໃຫ້ອ່ານລາຍຊື່ຜູ້ໃຊ້
+  const identifier = String(body.user ?? body.userId ?? "").trim();
   const pin = String(body.pin ?? "").replace(/\D/g, "");
-  if (!userId || pin.length < 4 || pin.length > 6) {
+  if (!identifier || pin.length < 4 || pin.length > 6) {
     throw new HttpError(400, "ຕ້ອງມີຊື່ຜູ້ໃຊ້ ແລະ PIN 4–6 ໂຕເລກ");
   }
+  if (!/^[^,()%*]+$/.test(identifier)) {
+    throw new HttpError(400, "ຊື່ຜູ້ໃຊ້ມີໂຕອັກສອນທີ່ບໍ່ອະນຸຍາດ");
+  }
 
-  if ((await recentCount("login", { userId, ok: false }, LOGIN_FAIL_WINDOW_MIN)) >= LOGIN_FAIL_MAX) {
+  if ((await recentCount("login", { userId: identifier, ok: false }, LOGIN_FAIL_WINDOW_MIN)) >= LOGIN_FAIL_MAX) {
     throw new HttpError(429, "ລອງຜິດຫຼາຍຄັ້ງ — ລໍຖ້າ 5 ນາທີ ແລ້ວລອງໃໝ່");
   }
   if (ip && (await recentCount("login", { ip, ok: false }, LOGIN_IP_WINDOW_MIN)) >= LOGIN_IP_MAX) {
     throw new HttpError(429, "ຈາກເຄື່ອງນີ້ຫຼາຍເກີນໄປ — ລໍຖ້າ 1 ຊົ່ວໂມງ");
   }
 
+  const encoded = encodeURIComponent(identifier);
   const users = await rest<DbUser[]>(
-    `app_users?id=eq.${encodeURIComponent(userId)}&select=id,name,role,perms,active,pin_hash`
+    `app_users?or=(id.eq.${encoded},name.ilike.${encoded})&select=id,name,role,perms,active,pin_hash`
   );
-  const user = users?.[0];
+  let user = users?.find((row) => row.id === identifier);
+  if (!user) {
+    if ((users?.length ?? 0) > 1) {
+      throw new HttpError(409, "ມີຊື່ຊ້ຳກັນ — ໃສ່ id ຂອງຜູ້ໃຊ້");
+    }
+    user = users?.[0];
+  }
   const ok = !!user && user.active !== false && (await verifyPin(pin, user.pin_hash));
 
   if (!ok || !user) {
-    await recordAttempt("login", userId, ip, false);
+    // ນັບດ້ວຍຄ່າທີ່ client ສົ່ງມາ (ຊື່ ຫຼື id) ເພື່ອໃຫ້ກົງກັບ recentCount ຂ້າງເທິງ
+    await recordAttempt("login", identifier, ip, false);
     throw new HttpError(401, "ຊື່ຜູ້ໃຊ້ ຫຼື PIN ບໍ່ຖືກ");
   }
 

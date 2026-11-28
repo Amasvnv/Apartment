@@ -1,36 +1,15 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  ApiError,
+  clearCache,
+  loginApi,
+  logoutApi,
+  readConfig
+} from "../data/storage";
 import { useStore } from "../data/store";
 import type { AptUser } from "../data/types";
 
 const SESSION_KEY = "apt.session";
-const GUARD_KEY = "apt.pinguard";
-const MAX_ATTEMPTS = 5;
-const LOCK_MS = 60_000;
-
-interface Guard {
-  fails: number;
-  until: number;
-}
-
-/* ກັນການເດົາ PIN: ຜິດ 5 ຄັ້ງ → ລ໋ອກ 60 ວິນາທີ (ນັບຕໍ່ session ຂອງເຄື່ອງ) */
-function readGuard(): Guard {
-  try {
-    const raw = JSON.parse(sessionStorage.getItem(GUARD_KEY) || "null") as Guard | null;
-    if (raw && typeof raw.fails === "number" && typeof raw.until === "number") return raw;
-  } catch {
-    /* ignore */
-  }
-  return { fails: 0, until: 0 };
-}
-
-function writeGuard(guard: Guard) {
-  sessionStorage.setItem(GUARD_KEY, JSON.stringify(guard));
-}
-
-function lockMessage(until: number): string | null {
-  const left = Math.ceil((until - Date.now()) / 1000);
-  return left > 0 ? `ລອງຜິດຫຼາຍຄັ້ງ — ລໍຖ້າ ${left} ວິນາທີ ແລ້ວລອງໃໝ່` : null;
-}
 
 interface Session {
   id: string;
@@ -75,7 +54,7 @@ interface AuthValue {
   user: AptUser | null;
   roleLabel: string;
   isViewer: boolean;
-  login: (userId: string, pin: string) => string | null;
+  login: (identifier: string, pin: string) => Promise<string | null>;
   logout: () => void;
   canEdit: (page: string) => boolean;
   canDelete: (page: string) => boolean;
@@ -91,7 +70,7 @@ const ROLE_LABELS: Record<string, string> = {
 const AuthContext = createContext<AuthValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data } = useStore();
+  const { data, reload } = useStore();
   const [session, setSession] = useState<Session | null>(() => readSession());
 
   const user = useMemo(() => {
@@ -101,37 +80,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return found;
   }, [session, data.settings.users]);
 
-  const login = useCallback(
-    (userId: string, pin: string): string | null => {
-      const guard = readGuard();
-      const locked = lockMessage(guard.until);
-      if (locked) return locked;
+  // 401 ຈາກ apt-api (session ໝົດອາຍຸ/ຖືກລຶບ) → ອອກຈາກລະບົບທັນທີ
+  useEffect(() => {
+    const onUnauthorized = () => {
+      clearSession();
+      setSession(null);
+    };
+    window.addEventListener("apt:unauthorized", onUnauthorized);
+    return () => window.removeEventListener("apt:unauthorized", onUnauthorized);
+  }, []);
 
-      const candidate = (data.settings.users || []).find((item) => item.id === userId);
-      if (!candidate) return "ບໍ່ພົບຜູ້ໃຊ້";
-      if (candidate.active === false) return "ຜູ້ໃຊ້ນີ້ຖືກປິດໃຊ້ງານ";
-      if (!candidate.pin) return "ຜູ້ໃຊ້ນີ້ຍັງບໍ່ມີ PIN";
-      if (String(pin).replace(/\D/g, "") !== String(candidate.pin)) {
-        const fails = (guard.until ? 0 : guard.fails) + 1;
-        if (fails >= MAX_ATTEMPTS) {
-          writeGuard({ fails: 0, until: Date.now() + LOCK_MS });
-          return `PIN ຜິດ ${MAX_ATTEMPTS} ຄັ້ງ — ລໍຖ້າ 60 ວິນາທີ ແລ້ວລອງໃໝ່`;
-        }
-        writeGuard({ fails, until: 0 });
-        return `PIN ບໍ່ຖືກ — ລອງໃໝ່ອີກຄັ້ງ (ເຫຼືອ ${MAX_ATTEMPTS - fails} ຄັ້ງ)`;
+  const login = useCallback(
+    async (identifier: string, pin: string): Promise<string | null> => {
+      const config = readConfig();
+      if (!config) return "ຍັງບໍ່ໄດ້ເຊື່ອມຕໍ່ຖານຂໍ້ມູນ";
+      const digits = String(pin).replace(/\D/g, "");
+      if (!identifier.trim()) return "ໃສ່ຊື່ຜູ້ໃຊ້";
+      if (digits.length < 4) return "PIN ຕ້ອງມີ 4–6 ໂຕເລກ";
+
+      try {
+        const result = await loginApi(config, identifier.trim(), digits);
+        writeSession({
+          id: result.user.id,
+          name: result.user.name,
+          phone: "",
+          role: result.user.role as AptUser["role"],
+          hasPin: true,
+          active: true,
+          perms: (result.user.perms || {}) as AptUser["perms"]
+        });
+        setSession({ id: result.user.id, name: result.user.name, role: result.user.role, at: Date.now() });
+        await reload();
+        return null;
+      } catch (error) {
+        return error instanceof ApiError ? error.message : "ເຊື່ອມຕໍ່ບໍ່ໄດ້ — ກວດເຄືອຂ່າຍແລ້ວລອງໃໝ່";
       }
-      writeGuard({ fails: 0, until: 0 });
-      writeSession(candidate);
-      setSession({ id: candidate.id, name: candidate.name, role: candidate.role, at: Date.now() });
-      return null;
     },
-    [data.settings.users]
+    [reload]
   );
 
   const logout = useCallback(() => {
     clearSession();
     setSession(null);
-  }, []);
+    void (async () => {
+      await logoutApi(readConfig());
+      clearCache();
+      await reload();
+    })();
+  }, [reload]);
 
   const isViewer = user?.role === "viewer";
 

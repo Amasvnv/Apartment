@@ -4,7 +4,7 @@ import qrUrl from "../assets/lao-qr.webp";
 import BillCheckQr from "./BillCheckQr";
 import BillNote from "./BillNote";
 import { useStore } from "../data/store";
-import type { Invoice } from "../data/types";
+import type { AppData, Invoice } from "../data/types";
 import { arrearsDetail, arrearsItems } from "../lib/arrears";
 import {
   ctxOf,
@@ -30,8 +30,10 @@ const today = () => {
   return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
 };
 
-export default function BillPaper({ invoice }: { invoice: Invoice }) {
-  const { data } = useStore();
+export default function BillPaper({ invoice, data: provided }: { invoice: Invoice; data?: AppData }) {
+  const store = useStore();
+  // ໜ້າສາທາລະນະ (QR) ສົ່ງຂໍ້ມູນທີ່ດຶງມາຈາກ apt-api ເຂົ້າມາໂດຍກົງ
+  const data = provided ?? store.data;
   const ctx = ctxOf(data);
   const currency = data.settings.currency;
   const rates = invoiceRates(ctx, invoice);

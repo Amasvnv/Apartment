@@ -1,4 +1,4 @@
-import { Alert, Button, Image, PasswordInput, Select, Text, UnstyledButton } from "@mantine/core";
+import { Alert, Button, Image, PasswordInput, Text, TextInput, UnstyledButton } from "@mantine/core";
 import {
   IconAlertCircle,
   IconArrowRight,
@@ -18,7 +18,7 @@ import {
   IconUserShield,
   IconUsers
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import logoUrl from "../assets/souvannahvong-logo-cut.webp";
 import { useAuth } from "../auth/auth";
@@ -48,19 +48,20 @@ export default function Login() {
   const [userId, setUserId] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const activeUsers = (data.settings.users || []).filter((item) => item.active !== false);
   const brandName = data.settings.name || "ອາພາດເມັນ ສຸວັນນະວົງ";
-
-  useEffect(() => {
-    if (!userId && activeUsers.length) setUserId(activeUsers[0].id);
-  }, [activeUsers, userId]);
 
   if (user) return <Navigate to="/" replace />;
 
-  const submit = (event: React.FormEvent) => {
+  // apt-api ເປັນຜູ້ກວດຊື່ ແລະ PIN ຝ່າຍ server (ບໍ່ມີລາຍຊື່ຜູ້ໃຊ້ໃຫ້ເບິ່ງກ່ອນ login)
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const message = login(userId, pin);
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    const message = await login(userId, pin);
+    setBusy(false);
     if (message) {
       setError(message);
       setPin("");
@@ -136,22 +137,20 @@ export default function Login() {
           </div>
 
           <h2 className="lg-title">ຍິນດີຕ້ອນຮັບ</h2>
-          <p className="lg-sub">ເລືອກຊື່ຜູ້ໃຊ້ ແລ້ວໃສ່ PIN ເພື່ອເຂົ້າສູ່ລະບົບ</p>
+          <p className="lg-sub">ໃສ່ຊື່ຜູ້ໃຊ້ ແລະ PIN ເພື່ອເຂົ້າສູ່ລະບົບ</p>
 
           <form onSubmit={submit} className="lg-fields">
-            <Select
-              label="ຜູ້ໃຊ້"
-              placeholder="ເລືອກຜູ້ໃຊ້"
+            <TextInput
+              label="ຊື່ຜູ້ໃຊ້"
+              placeholder="ຊື່ ຫຼື id ຜູ້ໃຊ້"
               leftSection={<IconUser size={16} />}
-              data={activeUsers.map((item) => ({
-                value: item.id,
-                label: item.role === "manager" ? `${item.name} · ຜູ້ຈັດການ` : item.name
-              }))}
-              value={userId || null}
-              onChange={(value) => setUserId(value || "")}
-              disabled={!activeUsers.length}
-              allowDeselect={false}
+              value={userId}
+              onChange={(event) => {
+                setUserId(event.currentTarget.value);
+                setError("");
+              }}
               radius="md"
+              autoComplete="username"
             />
             <PasswordInput
               label="PIN"
@@ -164,7 +163,6 @@ export default function Login() {
               inputMode="numeric"
               maxLength={6}
               radius="md"
-              disabled={!activeUsers.length}
               autoFocus
             />
             {error ? (
@@ -172,17 +170,14 @@ export default function Login() {
                 {error}
               </Alert>
             ) : null}
-            {!activeUsers.length ? (
-              <Alert color="amber" variant="light" radius="md" icon={<IconAlertCircle size={16} />}>
-                ຕ້ອງເພີ່ມຜູ້ໃຊ້ກ່ອນ — ເປີດໜ້າ ຜູ້ໃຊ້ ຖ້າເຂົ້າລະບົບໄດ້ແລ້ວ
-              </Alert>
-            ) : null}
+
             <Button
               type="submit"
               fullWidth
               radius="md"
               rightSection={<IconArrowRight size={17} />}
-              disabled={!activeUsers.length}
+              loading={busy}
+              disabled={!userId.trim() || pin.replace(/\D/g, "").length < 4}
               className="lg-submit"
             >
               ເຂົ້າສູ່ລະບົບ

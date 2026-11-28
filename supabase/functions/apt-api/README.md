@@ -17,7 +17,7 @@
 
 | action | body | ຜົນ |
 | --- | --- | --- |
-| `login` | `{ userId, pin }` | `{ token, expiresAt, user }` — ຜິດ 5 ຄັ້ງ/5 ນາທີ ຫຼື 20 ຄັ້ງ/IP/ຊົ່ວໂມງ → 429 |
+| `login` | `{ user, pin }` — `user` ເປັນຊື່ ຫຼື id | `{ token, expiresAt, user }` — ຜິດ 5 ຄັ້ງ/5 ນາທີ ຫຼື 20 ຄັ້ງ/IP/ຊົ່ວໂມງ → 429 |
 | `logout` | `{ token }` | ລຶບ session |
 | `load` | `{ token }` | ຂໍ້ມູນທັງໝົດ ແບບ `apt_load` ແຕ່ **users ບໍ່ມີ pin** |
 | `save` | `{ token, payload, expectedRev }` | ບັນທຶກ + ຊິງຄ໌ `settings.users` ລົງ `app_users`; ຂັດແຍ່ງ rev → 409 `{ error: "conflict", rev }` |
