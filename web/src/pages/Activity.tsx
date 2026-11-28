@@ -189,7 +189,7 @@ export default function Activity() {
         }
       />
 
-      <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
+      <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="md">
         {tiles.map((tile) => (
           <Box
             key={tile.label}

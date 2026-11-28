@@ -288,7 +288,7 @@ export default function Users() {
         }
       />
 
-      <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
+      <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="md">
         {tiles.map((tile) => (
           <Box
             key={tile.label}
@@ -325,7 +325,7 @@ export default function Users() {
       </Group>
 
       {users.length ? (
-        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           {users.map((entry) => {
             const tone = ROLE_TONE[entry.role] || ROLE_TONE.staff;
             const isMe = entry.id === me?.id;

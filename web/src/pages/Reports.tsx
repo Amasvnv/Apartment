@@ -1,5 +1,6 @@
 import { Box, Grid, Group, SegmentedControl, SimpleGrid, Stack, Text } from "@mantine/core";
 import { DonutChart, LineChart } from "@mantine/charts";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconBolt, IconChartBar, IconDroplet, IconReceipt2, IconTrendingUp, IconWallet } from "@tabler/icons-react";
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import MonthSwitcher from "../components/MonthSwitcher";
@@ -157,6 +158,7 @@ export default function Reports() {
   const currentStats = invoiceStats(ctx, monthInvoices(ctx, monthNumber, year));
 
   const [roomSort, setRoomSort] = useState<"usage" | "no">("usage");
+  const isNarrow = useMediaQuery("(max-width: 48em)");
   const monthLabels = months.map((entry) => MONTH_SHORT[entry.month - 1]);
   const currentRates = ratesForMonth(ctx.settings, year, monthNumber);
 
@@ -314,8 +316,13 @@ export default function Reports() {
     withDots: true,
     dotProps: { r: 3, strokeWidth: 2 },
     activeDotProps: { r: 5, strokeWidth: 2 },
-    xAxisProps: { tickLine: false, interval: 0 as const, minTickGap: 4 },
-    yAxisProps: { tickLine: false, width: 38 }
+    xAxisProps: {
+      tickLine: false,
+      interval: isNarrow ? 1 : 0,
+      minTickGap: 4,
+      tick: { fontSize: 10.5 }
+    },
+    yAxisProps: { tickLine: false, width: 38, tick: { fontSize: 10.5 } }
   };
 
   return (
@@ -326,7 +333,7 @@ export default function Reports() {
         actions={<MonthSwitcher />}
       />
 
-      <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
+      <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="md">
         {tiles.map((tile) => (
           <Box
             key={tile.label}
@@ -444,7 +451,7 @@ export default function Reports() {
       </Grid>
 
       <Box className="surface rp-card">
-        <Group justify="space-between" align="flex-start" gap="md" mb={10} wrap="nowrap">
+        <Group justify="space-between" align="flex-start" gap="md" mb={10} wrap="wrap">
           <Group gap={10} wrap="nowrap">
             <Box className="rp-ico" style={{ "--tone": "#f59e0b" } as CSSProperties}>
               <IconBolt size={15} />
@@ -459,6 +466,8 @@ export default function Reports() {
           <SegmentedControl
             size="xs"
             radius="xl"
+            fullWidth={!!isNarrow}
+            style={isNarrow ? { width: "100%" } : undefined}
             value={roomSort}
             onChange={(value) => setRoomSort(value as "usage" | "no")}
             data={[

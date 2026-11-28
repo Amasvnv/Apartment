@@ -6152,3 +6152,212 @@ a {
     display: none;
   }
 }
+
+/* ---------- ປັບສົມດຸນແທັບເລັດ / ມືຖື ---------- */
+
+@media (max-width: 61.99em) {
+  .rp-card {
+    padding: 14px;
+  }
+
+  .rp-badge {
+    height: 22px;
+    padding: 0 8px;
+    font-size: 10.5px;
+  }
+
+  .rp-debt {
+    gap: 9px;
+    padding: 9px 11px;
+  }
+
+  .rp-debt-amount {
+    min-width: 96px;
+    font-size: 12.5px;
+  }
+
+  .act-row {
+    gap: 11px;
+    padding: 11px 13px 11px 12px;
+  }
+
+  .act-side {
+    padding: 14px;
+  }
+
+  .bc-hero {
+    padding: 20px 18px 16px;
+  }
+}
+
+@media (max-width: 48em) {
+  .rp-card {
+    padding: 12px;
+  }
+
+  .rp-title {
+    font-size: 13px;
+  }
+
+  .rp-sub {
+    font-size: 10.5px;
+  }
+
+  .rp-room {
+    grid-template-columns: 28px minmax(0, 1fr) auto auto;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 11px;
+  }
+
+  .rp-room-no {
+    height: 26px;
+    border-radius: 8px;
+    font-size: 10.5px;
+  }
+
+  .rp-room-name {
+    font-size: 11.5px;
+  }
+
+  .rp-room-tenant {
+    display: none;
+  }
+
+  .rp-room-kwh b {
+    font-size: 11.5px;
+  }
+
+  .rp-room-kwh small {
+    font-size: 9.5px;
+  }
+
+  .rp-delta {
+    height: 18px;
+    padding: 0 5px;
+    font-size: 9px;
+  }
+
+  .rp-debt {
+    gap: 8px;
+    padding: 8px 9px;
+    border-radius: 11px;
+  }
+
+  .rp-rank {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    font-size: 10px;
+  }
+
+  .rp-debt-amount {
+    min-width: 82px;
+    font-size: 11.5px;
+  }
+
+  .rp-donut-wrap {
+    width: 100%;
+  }
+
+  .rp-legend-pct {
+    min-width: 30px;
+  }
+
+  .act-row {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 9px;
+    padding: 10px 11px 10px 12px;
+    border-radius: 13px;
+  }
+
+  .act-ico {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
+
+  .act-title {
+    font-size: 12.5px;
+  }
+
+  .act-detail {
+    font-size: 11.5px;
+  }
+
+  .act-time {
+    min-width: 54px;
+  }
+
+  .act-time-main {
+    font-size: 11.5px;
+  }
+
+  .act-time-sub {
+    font-size: 9.5px;
+  }
+
+  .act-side {
+    padding: 13px;
+  }
+
+  .act-chips-wrap {
+    padding: 9px 10px;
+  }
+
+  .act-chip {
+    height: 29px;
+    padding: 0 10px;
+    font-size: 11.5px;
+  }
+
+  .usr-perms {
+    padding: 8px 9px;
+  }
+
+  .usr-form-modal-body {
+    padding: 12px;
+  }
+
+  .usr-form-sec {
+    padding: 11px;
+  }
+
+  .bc-hero {
+    padding: 16px 14px 14px;
+  }
+
+  .bc-hero-title {
+    font-size: 20px;
+  }
+
+  .bc-hero-sub {
+    font-size: 12.5px;
+  }
+
+  .bc-search-btn {
+    min-width: 104px;
+  }
+}
+
+@media (max-width: 30em) {
+  .rp-room {
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+  }
+
+  .rp-delta {
+    display: none;
+  }
+
+  .rp-chip-label {
+    font-size: 9.5px;
+  }
+
+  .rp-chip-value {
+    font-size: 10px;
+  }
+
+  .rp-legend-value {
+    font-size: 10.5px;
+  }
+}
