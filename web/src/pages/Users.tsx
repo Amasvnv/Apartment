@@ -1,23 +1,42 @@
 import {
   ActionIcon,
   Badge,
+  Box,
   Button,
-  Card,
-  Checkbox,
   Group,
   Modal,
-  Select,
+  SegmentedControl,
   SimpleGrid,
   Stack,
   Switch,
-  Table,
   Text,
   TextInput,
   Tooltip
 } from "@mantine/core";
-import { IconEdit, IconPlus, IconTrash, IconUserShield } from "@tabler/icons-react";
-import { useState } from "react";
+import {
+  IconBolt,
+  IconBuilding,
+  IconEdit,
+  IconEye,
+  IconLayoutDashboard,
+  IconLock,
+  IconPencil,
+  IconPhone,
+  IconPlus,
+  IconReceipt2,
+  IconSettings,
+  IconShieldCheck,
+  IconTools,
+  IconTrash,
+  IconUser,
+  IconUserOff,
+  IconUserShield,
+  IconUsers,
+  IconUserStar
+} from "@tabler/icons-react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import PageHeader from "../components/PageHeader";
+import CardArt, { type CardArtKind } from "../components/ui/CardArt";
 import ConfirmDialog, { type ConfirmState } from "../components/ui/ConfirmDialog";
 import { useAuth } from "../auth/auth";
 import { useStore } from "../data/store";
@@ -30,6 +49,13 @@ const ROLES: Record<UserRole, string> = {
   tech: "ຊ່າງ",
   staff: "ພະນັກງານ",
   viewer: "ຜູ້ເບິ່ງ"
+};
+
+const ROLE_TONE: Record<UserRole, string> = {
+  manager: "#1b6fd6",
+  tech: "#8b5cf6",
+  staff: "#06b6d4",
+  viewer: "#64748b"
 };
 
 const PAGES = [
@@ -49,6 +75,34 @@ const ACTIONS: { key: PermAction; label: string }[] = [
   { key: "delete", label: "ລຶບ" }
 ];
 
+const PAGE_ICON: Record<string, typeof IconUsers> = {
+  overview: IconLayoutDashboard,
+  meter: IconBolt,
+  rooms: IconBuilding,
+  tenants: IconUsers,
+  invoices: IconReceipt2,
+  repairs: IconTools,
+  settings: IconSettings,
+  users: IconUserShield
+};
+
+const ACTION_ICON: Record<PermAction, typeof IconEye> = {
+  view: IconEye,
+  edit: IconPencil,
+  delete: IconTrash
+};
+
+const GRADIENTS = {
+  blue:
+    "radial-gradient(120% 110% at 88% -18%, rgba(255,255,255,0.34), transparent 62%), linear-gradient(142deg, #0a5fd0 0%, #2563eb 55%, #7cbcff 100%)",
+  green:
+    "radial-gradient(120% 110% at 88% -18%, rgba(255,255,255,0.34), transparent 62%), linear-gradient(142deg, #0e7c5a 0%, #12a06a 52%, #43cf9b 100%)",
+  slate:
+    "radial-gradient(120% 110% at 88% -18%, rgba(255,255,255,0.3), transparent 62%), linear-gradient(142deg, #44546b 0%, #64748b 55%, #a5b6c9 100%)",
+  violet:
+    "radial-gradient(120% 110% at 88% -18%, rgba(255,255,255,0.34), transparent 62%), linear-gradient(142deg, #6d28d9 0%, #8b5cf6 52%, #d8b4fe 100%)"
+} as const;
+
 const emptyUser = (): AptUser => ({
   id: "",
   name: "",
@@ -58,6 +112,14 @@ const emptyUser = (): AptUser => ({
   active: true,
   perms: {}
 });
+
+const initials = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.slice(0, 1).toUpperCase())
+    .join("") || "?";
 
 export default function Users() {
   const { data, commit } = useStore();
@@ -85,6 +147,15 @@ export default function Users() {
     if (checked) current.add(action);
     else current.delete(action);
     setForm({ ...form, perms: { ...form.perms, [page]: [...current] } });
+  };
+
+  const togglePage = (page: string) => {
+    const granted = form.perms?.[page] || [];
+    const all = ACTIONS.every((action) => granted.includes(action.key));
+    setForm({
+      ...form,
+      perms: { ...form.perms, [page]: all ? [] : ACTIONS.map((action) => action.key) }
+    });
   };
 
   const [savingForm, setSavingForm] = useState(false);
@@ -153,6 +224,56 @@ export default function Users() {
     );
   };
 
+  const activeCount = users.filter((entry) => entry.active !== false).length;
+  const managerCount = users.filter((entry) => entry.role === "manager").length;
+
+  const tiles: {
+    label: string;
+    value: number;
+    note: string;
+    icon: ReactNode;
+    art: CardArtKind;
+    gradient: string;
+    shadow: string;
+  }[] = [
+    {
+      label: "ຜູ້ໃຊ້ທັງໝົດ",
+      value: users.length,
+      note: `${managerCount} ຜູ້ຈັດການ · ${users.length - managerCount} ທີມງານ`,
+      icon: <IconUsers size={14} />,
+      art: "apartments",
+      gradient: GRADIENTS.blue,
+      shadow: "rgba(37,99,235,0.45)"
+    },
+    {
+      label: "ເປີດໃຊ້ງານ",
+      value: activeCount,
+      note: `${users.length - activeCount} ບັນຊີຖືກປິດ`,
+      icon: <IconShieldCheck size={14} />,
+      art: "check",
+      gradient: GRADIENTS.green,
+      shadow: "rgba(18,160,106,0.45)"
+    },
+    {
+      label: "ປິດໃຊ້ງານ",
+      value: users.length - activeCount,
+      note: "ເຂົ້າລະບົບບໍ່ໄດ້",
+      icon: <IconUserOff size={14} />,
+      art: "clock",
+      gradient: GRADIENTS.slate,
+      shadow: "rgba(100,116,139,0.45)"
+    },
+    {
+      label: "ຜູ້ຈັດການ",
+      value: managerCount,
+      note: "ສິດເຕັມທຸກໜ້າ",
+      icon: <IconUserStar size={14} />,
+      art: "sparkles",
+      gradient: GRADIENTS.violet,
+      shadow: "rgba(139,92,246,0.45)"
+    }
+  ];
+
   return (
     <Stack gap="lg" pb="xl">
       <PageHeader
@@ -160,160 +281,322 @@ export default function Users() {
         subtitle="ບັນຊີຜູ້ໃຊ້ ບົດບາດ ແລະ ສິດເຂົ້າເຖິງແຕ່ລະໜ້າ"
         actions={
           canEdit("users") ? (
-            <Button leftSection={<IconPlus size={16} />} onClick={openAdd}>
+            <Button className="btn-grad" leftSection={<IconPlus size={16} />} onClick={openAdd}>
               ເພີ່ມຜູ້ໃຊ້
             </Button>
           ) : null
         }
       />
 
-      <Card padding="lg">
-        <Group justify="space-between" mb="md">
-          <Text fw={600}>ຜູ້ໃຊ້ໃນລະບົບ</Text>
-          <Badge variant="light">{users.length} ບັນຊີ</Badge>
+      <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
+        {tiles.map((tile) => (
+          <Box
+            key={tile.label}
+            className="tile lift rep-stat"
+            style={{ background: tile.gradient, boxShadow: `0 18px 34px -26px ${tile.shadow}` }}
+          >
+            <CardArt kind={tile.art} />
+            <Group justify="space-between" align="flex-start" wrap="nowrap" gap={8}>
+              <Text className="tile-label">{tile.label}</Text>
+              <Box className="spend-ico">{tile.icon}</Box>
+            </Group>
+            <Text className="tile-value tnum" mt={10}>
+              {tile.value}
+            </Text>
+            <Text className="tile-note" mt={6}>
+              {tile.note}
+            </Text>
+          </Box>
+        ))}
+      </SimpleGrid>
+
+      <Group justify="space-between" gap="sm" wrap="wrap">
+        <Group gap={8}>
+          <Text fw={600} c="var(--text-strong)">
+            ຜູ້ໃຊ້ໃນລະບົບ
+          </Text>
+          <Badge variant="light" radius="xl">
+            {users.length} ບັນຊີ
+          </Badge>
         </Group>
+        <Text size="xs" c="var(--text-muted)">
+          ກົດສະຫຼັບເພື່ອເປີດ/ປິດບັນຊີ · ບັນຊີຂອງທ່ານແກ້ບໍ່ໄດ້
+        </Text>
+      </Group>
 
-        <Table.ScrollContainer minWidth={760}>
-          <Table>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>ຊື່</Table.Th>
-                <Table.Th>ເບີໂທ</Table.Th>
-                <Table.Th>ບົດບາດ</Table.Th>
-                <Table.Th ta="center">ສິດ</Table.Th>
-                <Table.Th ta="center">ເປີດໃຊ້</Table.Th>
-                <Table.Th ta="right">ຈັດການ</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {users.map((entry) => (
-                <Table.Tr key={entry.id}>
-                  <Table.Td>
-                    <Text fw={500}>{entry.name}</Text>
-                    <Text size="xs" c="var(--text-muted)">
-                      {entry.pin ? `PIN ••••` : "ຍັງບໍ່ມີ PIN"}
-                    </Text>
-                  </Table.Td>
-                  <Table.Td>{entry.phone || "—"}</Table.Td>
-                  <Table.Td>
-                    <Badge variant="light" color={entry.role === "manager" ? "brand" : entry.role === "viewer" ? "gray" : "cyan"}>
-                      {ROLES[entry.role] || entry.role}
-                    </Badge>
-                  </Table.Td>
-                  <Table.Td ta="center">
-                    <Group gap={4} justify="center">
-                      {entry.role === "manager" ? (
-                        <Text size="xs" c="var(--text-body)">
-                          ທຸກໜ້າ
+      {users.length ? (
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+          {users.map((entry) => {
+            const tone = ROLE_TONE[entry.role] || ROLE_TONE.staff;
+            const isMe = entry.id === me?.id;
+            const permEntries = Object.entries(entry.perms || {})
+              .filter(([, actions]) => actions?.length)
+              .slice(0, 4);
+            const morePerms = Object.entries(entry.perms || {}).filter(([, actions]) => actions?.length).length - 4;
+
+            return (
+              <Box key={entry.id} className="usr-card lift" style={{ "--tone": tone } as CSSProperties}>
+                <Group justify="space-between" align="flex-start" wrap="nowrap" gap="sm">
+                  <Group gap={12} wrap="nowrap" align="center" style={{ minWidth: 0 }}>
+                    <Box className="usr-avatar">{initials(entry.name)}</Box>
+                    <Box style={{ minWidth: 0 }}>
+                      <Group gap={7} wrap="nowrap" align="center">
+                        <Text className="usr-name" truncate>
+                          {entry.name || "ບໍ່ມີຊື່"}
                         </Text>
-                      ) : (
-                        Object.entries(entry.perms || {})
-                          .filter(([, actions]) => actions?.length)
-                          .slice(0, 4)
-                          .map(([page, actions]) => (
-                            <Badge key={page} size="xs" variant="dot" color="brand">
-                              {PAGES.find((item) => item.key === page)?.label || page}
-                              {actions?.includes("edit") ? " · ແກ້ໄຂ" : ""}
-                            </Badge>
-                          ))
-                      )}
-                    </Group>
-                  </Table.Td>
-                  <Table.Td ta="center">
-                    <Switch
-                      checked={entry.active !== false}
-                      onChange={() => toggleActive(entry)}
-                      disabled={entry.id === me?.id || !canEdit("users")}
-                      size="sm"
-                    />
-                  </Table.Td>
-                  <Table.Td>
-                    <Group gap={4} justify="flex-end">
-                      <Tooltip label="ແກ້ໄຂ">
-                        <ActionIcon variant="subtle" color="brand" disabled={!canEdit("users")} onClick={() => openEdit(entry)}>
-                          <IconEdit size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                      <Tooltip label={entry.id === me?.id ? "ລຶບບັນຊີຕົນເອງບໍ່ໄດ້" : "ລຶບ"}>
-                        <ActionIcon
-                          variant="subtle"
-                          color="red"
-                          disabled={entry.id === me?.id || !canDelete("users")}
-                          onClick={() => remove(entry)}
-                        >
-                          <IconTrash size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                    </Group>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </Table.ScrollContainer>
-      </Card>
+                        {isMe ? <span className="usr-you">ທ່ານ</span> : null}
+                      </Group>
+                      <Group gap={6} wrap="wrap" mt={4}>
+                        <span className="usr-tag">{ROLES[entry.role] || entry.role}</span>
+                        <span className="usr-meta">
+                          <IconPhone size={11} />
+                          {entry.phone || "—"}
+                        </span>
+                        <span className="usr-meta">
+                          <IconLock size={11} />
+                          {entry.pin ? "PIN ••••" : "ຍັງບໍ່ມີ PIN"}
+                        </span>
+                      </Group>
+                    </Box>
+                  </Group>
 
-      <Modal opened={opened} onClose={() => setOpened(false)} title={editingId ? "ແກ້ໄຂຜູ້ໃຊ້" : "ເພີ່ມຜູ້ໃຊ້"} size="lg">
-        <Stack gap="sm">
-          <Group grow>
-            <TextInput label="ຊື່" value={form.name} onChange={(event) => setForm({ ...form, name: event.currentTarget.value })} required />
-            <TextInput label="ເບີໂທ" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.currentTarget.value })} />
-          </Group>
-          <Group grow>
-            <Select
-              label="ບົດບາດ"
-              data={Object.entries(ROLES).map(([value, label]) => ({ value, label }))}
+                  <Switch
+                    checked={entry.active !== false}
+                    onChange={() => toggleActive(entry)}
+                    disabled={isMe || !canEdit("users")}
+                    size="sm"
+                    aria-label={`ເປີດໃຊ້ ${entry.name}`}
+                  />
+                </Group>
+
+                <Box className="usr-perms">
+                  <Text className="usr-perms-title">ສິດເຂົ້າເຖິງ</Text>
+                  <Group gap={5} wrap="wrap">
+                    {entry.role === "manager" ? (
+                      <span className="usr-perm is-all">
+                        <IconShieldCheck size={11} /> ທຸກໜ້າ
+                      </span>
+                    ) : permEntries.length ? (
+                      permEntries.map(([page, actions]) => (
+                        <span key={page} className="usr-perm">
+                          {PAGES.find((item) => item.key === page)?.label || page}
+                          {actions?.includes("edit") ? " · ແກ້ໄຂ" : ""}
+                        </span>
+                      ))
+                    ) : (
+                      <Text className="usr-perm-empty">ຍັງບໍ່ໄດ້ກຳນົດສິດ</Text>
+                    )}
+                    {entry.role !== "manager" && morePerms > 0 ? (
+                      <span className="usr-perm is-more">+{morePerms}</span>
+                    ) : null}
+                  </Group>
+                </Box>
+
+                <Group justify="space-between" align="center" gap="sm" className="usr-foot">
+                  <span className={`usr-status${entry.active !== false ? " is-on" : " is-off"}`}>
+                    <span className="usr-status-dot" />
+                    {entry.active !== false ? "ເປີດໃຊ້ງານ" : "ປິດໃຊ້ງານ"}
+                  </span>
+
+                  <Group gap={4} wrap="nowrap">
+                    <Tooltip label="ແກ້ໄຂ">
+                      <ActionIcon
+                        variant="light"
+                        color="brand"
+                        radius="xl"
+                        disabled={!canEdit("users")}
+                        onClick={() => openEdit(entry)}
+                        aria-label={`ແກ້ໄຂ ${entry.name}`}
+                      >
+                        <IconEdit size={15} />
+                      </ActionIcon>
+                    </Tooltip>
+                    <Tooltip label={isMe ? "ລຶບບັນຊີຕົນເອງບໍ່ໄດ້" : "ລຶບ"}>
+                      <ActionIcon
+                        variant="light"
+                        color="red"
+                        radius="xl"
+                        disabled={isMe || !canDelete("users")}
+                        onClick={() => remove(entry)}
+                        aria-label={`ລຶບ ${entry.name}`}
+                      >
+                        <IconTrash size={15} />
+                      </ActionIcon>
+                    </Tooltip>
+                  </Group>
+                </Group>
+              </Box>
+            );
+          })}
+        </SimpleGrid>
+      ) : (
+        <Box className="surface rep-empty">
+          <Box className="rep-ico rep-ico--empty">
+            <IconUserShield size={20} />
+          </Box>
+          <Text fw={600} c="var(--text-strong)" mt="sm">
+            ຍັງບໍ່ມີຜູ້ໃຊ້
+          </Text>
+          <Text size="xs" c="var(--text-muted)" mt={4}>
+            ກົດ “ເພີ່ມຜູ້ໃຊ້” ເພື່ອສ້າງບັນຊີທຳອິດ
+          </Text>
+        </Box>
+      )}
+
+      <Modal
+        opened={opened}
+        onClose={() => setOpened(false)}
+        title={editingId ? "ແກ້ໄຂຜູ້ໃຊ້" : "ເພີ່ມຜູ້ໃຊ້"}
+        size="lg"
+        classNames={{ content: "usr-form-modal", header: "usr-form-modal-head", body: "usr-form-modal-body" }}
+      >
+        <Stack gap="md">
+          <Box className="usr-form-hero" style={{ "--tone": ROLE_TONE[form.role] } as CSSProperties}>
+            <Box className="usr-form-avatar">{initials(form.name)}</Box>
+            <Box style={{ minWidth: 0 }}>
+              <Text className="usr-form-hero-name">{form.name.trim() || "ຜູ້ໃຊ້ໃໝ່"}</Text>
+              <Text className="usr-form-hero-sub">
+                {ROLES[form.role]} · {form.active !== false ? "ເປີດໃຊ້ງານ" : "ປິດໃຊ້ງານ"}
+              </Text>
+            </Box>
+            <span className={`usr-form-hero-badge${form.active !== false ? " is-on" : ""}`}>
+              {form.active !== false ? "ເປີດໃຊ້" : "ປິດໃຊ້"}
+            </span>
+          </Box>
+
+          <Box className="usr-form-sec">
+            <Group gap={7} className="usr-form-sec-head">
+              <span className="usr-form-sec-ico">
+                <IconUser size={13} />
+              </span>
+              <Text className="usr-form-sec-title">ຂໍ້ມູນຜູ້ໃຊ້</Text>
+            </Group>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+              <TextInput
+                label="ຊື່"
+                value={form.name}
+                onChange={(event) => setForm({ ...form, name: event.currentTarget.value })}
+                leftSection={<IconUser size={14} />}
+                required
+              />
+              <TextInput
+                label="ເບີໂທ"
+                value={form.phone}
+                onChange={(event) => setForm({ ...form, phone: event.currentTarget.value })}
+                leftSection={<IconPhone size={14} />}
+                placeholder="020 …"
+              />
+              <TextInput
+                label="PIN (4–6 ໂຕເລກ)"
+                value={form.pin}
+                onChange={(event) => setForm({ ...form, pin: event.currentTarget.value.replace(/\D/g, "").slice(0, 6) })}
+                leftSection={<IconLock size={14} />}
+                inputMode="numeric"
+                placeholder="••••"
+              />
+              <Box>
+                <Text className="usr-form-label">ສະຖານະບັນຊີ</Text>
+                <Box className={`usr-form-switch${form.active !== false ? " is-on" : ""}`}>
+                  <Switch
+                    checked={form.active !== false}
+                    onChange={(event) => setForm({ ...form, active: event.currentTarget.checked })}
+                    size="sm"
+                    aria-label="ເປີດໃຊ້ບັນຊີ"
+                  />
+                  <Box style={{ minWidth: 0 }}>
+                    <Text className="usr-form-switch-title">{form.active !== false ? "ເປີດໃຊ້ງານ" : "ປິດໃຊ້ງານ"}</Text>
+                    <Text className="usr-form-switch-sub">
+                      {form.active !== false ? "ເຂົ້າລະບົບໄດ້" : "ເຂົ້າລະບົບບໍ່ໄດ້"}
+                    </Text>
+                  </Box>
+                </Box>
+              </Box>
+            </SimpleGrid>
+          </Box>
+
+          <Box className="usr-form-sec">
+            <Group gap={7} className="usr-form-sec-head">
+              <span className="usr-form-sec-ico is-violet">
+                <IconUserStar size={13} />
+              </span>
+              <Text className="usr-form-sec-title">ບົດບາດ</Text>
+            </Group>
+            <SegmentedControl
+              className="usr-form-roles"
+              fullWidth
+              radius="md"
               value={form.role}
               onChange={(value) => setForm({ ...form, role: (value as UserRole) || "staff" })}
+              data={Object.entries(ROLES).map(([value, label]) => ({ value, label }))}
             />
-            <TextInput
-              label="PIN (4–6 ໂຕເລກ)"
-              value={form.pin}
-              onChange={(event) => setForm({ ...form, pin: event.currentTarget.value.replace(/\D/g, "").slice(0, 6) })}
-              inputMode="numeric"
-            />
-          </Group>
-          <Group>
-            <Switch
-              label="ເປີດໃຊ້ບັນຊີ"
-              checked={form.active !== false}
-              onChange={(event) => setForm({ ...form, active: event.currentTarget.checked })}
-            />
-          </Group>
+          </Box>
 
-          <Group gap={6}>
-            <IconUserShield size={15} color="var(--text-body)" />
-            <Text size="sm" fw={600}>
-              ສິດເຂົ້າເຖິງ
-            </Text>
-          </Group>
+          <Box className="usr-form-sec">
+            <Group justify="space-between" align="center" gap={8} className="usr-form-sec-head">
+              <Group gap={7}>
+                <span className="usr-form-sec-ico is-green">
+                  <IconShieldCheck size={13} />
+                </span>
+                <Text className="usr-form-sec-title">ສິດເຂົ້າເຖິງ</Text>
+              </Group>
+              <Text className="usr-form-hint">ໝາຍສິດທີ່ຈະໃຫ້ · ຜູ້ຈັດການໄດ້ທຸກໜ້າ</Text>
+            </Group>
 
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="xs">
-            {PAGES.map((page) => (
-              <Card key={page.key} withBorder radius="md" padding="xs">
-                <Text size="xs" fw={500} mb={4}>
-                  {page.label}
-                </Text>
-                <Group gap="sm">
-                  {ACTIONS.map((action) => (
-                    <Checkbox
-                      key={action.key}
-                      label={action.label}
-                      checked={(form.perms?.[page.key] || []).includes(action.key)}
-                      onChange={(event) => togglePerm(page.key, action.key, event.currentTarget.checked)}
-                      size="xs"
-                    />
-                  ))}
-                </Group>
-              </Card>
-            ))}
-          </SimpleGrid>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={8}>
+              {PAGES.map((page) => {
+                const PageIcon = PAGE_ICON[page.key] || IconShieldCheck;
+                const granted = form.perms?.[page.key] || [];
+                const all = ACTIONS.every((action) => granted.includes(action.key));
+                return (
+                  <Box key={page.key} className="usr-perm-card">
+                    <Group justify="space-between" gap={8} wrap="nowrap">
+                      <Group gap={7} wrap="nowrap" style={{ minWidth: 0 }}>
+                        <span className="usr-perm-ico">
+                          <PageIcon size={13} />
+                        </span>
+                        <Text className="usr-perm-name" truncate>
+                          {page.label}
+                        </Text>
+                      </Group>
+                      <button
+                        type="button"
+                        className={`usr-perm-all${all ? " is-on" : ""}`}
+                        onClick={() => togglePage(page.key)}
+                      >
+                        {all ? "ລ້າງ" : "ທັງໝົດ"}
+                      </button>
+                    </Group>
 
-          <Group justify="flex-end" mt="sm">
+                    <Group gap={5} mt={9} wrap="nowrap">
+                      {ACTIONS.map((action) => {
+                        const PermIcon = ACTION_ICON[action.key];
+                        const on = granted.includes(action.key);
+                        return (
+                          <button
+                            key={action.key}
+                            type="button"
+                            className={`usr-perm-btn${on ? " is-on" : ""}`}
+                            data-action={action.key}
+                            aria-pressed={on}
+                            onClick={() => togglePerm(page.key, action.key, !on)}
+                          >
+                            <PermIcon size={12} />
+                            {action.label}
+                          </button>
+                        );
+                      })}
+                    </Group>
+                  </Box>
+                );
+              })}
+            </SimpleGrid>
+          </Box>
+
+          <Group justify="flex-end" gap="sm" className="usr-form-foot">
             <Button variant="default" onClick={() => setOpened(false)}>
               ຍົກເລີກ
             </Button>
-            <Button onClick={submit} loading={savingForm} disabled={!form.name.trim()}>
+            <Button className="btn-grad" onClick={submit} loading={savingForm} disabled={!form.name.trim()}>
               ບັນທຶກ
             </Button>
           </Group>

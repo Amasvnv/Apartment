@@ -37,6 +37,7 @@ import { useAuth } from "../auth/auth";
 import { useStore } from "../data/store";
 import type { Invoice, Tenant } from "../data/types";
 import { ctxOf, invoiceStats, invoiceTotal, monthInvoices } from "../lib/compute";
+import { arrearsDetail, arrearsItems } from "../lib/arrears";
 import { emptyInvoice, logActivity, removeInvoice, upsertInvoice } from "../lib/dataOps";
 import { invoiceNoLabel, money, monthLabel, num } from "../lib/format";
 import { notifyStatus } from "../lib/notify";
@@ -252,6 +253,9 @@ export default function Invoices() {
 
         {filtered.map((invoice) => {
           const total = invoiceTotal(ctx, invoice);
+          // ຍອດຄ້າງຈາກເດືອນກ່ອນຂອງຫ້ອງນີ້ (ຖືກບວກໃນໃບບີນປະຈຸບັນ)
+          const carriedItems = arrearsItems(ctx, invoice);
+          const carried = carriedItems.reduce((sum, item) => sum + item.amount, 0);
           return (
             <Box key={invoice.no} className={`rep-row lift inv-row${invoice.paid ? " is-paid" : " is-unpaid"}`}>
               <Box className="rep-ico" style={{ color: invoice.paid ? "#12a06a" : "#c98a1f" }}>
@@ -275,6 +279,13 @@ export default function Invoices() {
 
               <Group className="rep-meta" gap={8}>
                 <span className="rep-chip">ຫ້ອງ {invoice.room}</span>
+                {carried > 0 ? (
+                  <Tooltip label={`ຄ້າງ: ${arrearsDetail(carriedItems)}`} multiline w={300}>
+                    <Badge variant="light" color="orange" radius="xl" size="sm">
+                      ຄ້າງເດືອນກ່ອນ {money(carried, currency)}
+                    </Badge>
+                  </Tooltip>
+                ) : null}
                 <Badge variant="light" color={invoice.paid ? "green" : "red"} radius="xl" size="sm">
                   {invoice.paid ? "ຊຳລະແລ້ວ" : "ຍັງຄ້າງ"}
                 </Badge>

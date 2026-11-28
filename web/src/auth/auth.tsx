@@ -11,6 +11,12 @@ interface Session {
   at: number;
 }
 
+/** ຜູ້ໃຊ້ທີ່ login ຢູ່ — ໃຊ້ສຳລັບບັນທຶກວ່າໃຜເປັນຄົນແກ້ໄຂຂໍ້ມູນ */
+export function currentSession(): { id: string; name: string; role: string } | null {
+  const session = readSession();
+  return session ? { id: session.id, name: session.name, role: session.role } : null;
+}
+
 function readSession(): Session | null {
   try {
     const parsed = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null") as Session | null;

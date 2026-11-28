@@ -3,6 +3,7 @@ import logoUrl from "../assets/souvannahvong-logo-cut.webp";
 import qrUrl from "../assets/lao-qr.webp";
 import { useStore } from "../data/store";
 import type { Invoice } from "../data/types";
+import { arrearsDetail, arrearsItems } from "../lib/arrears";
 import {
   ctxOf,
   extraFeesShareFor,
@@ -42,7 +43,14 @@ export default function ReceiptPaper({ invoice, copy }: { invoice: Invoice; copy
     ? `${repairs.length > 1 ? `${repairs.length} ລາຍການ: ` : ""}${repairs.map((item) => item.title).join(" · ")}`
     : "ຕາມລາຍການທີ່ແຈ້ງ";
 
+  // ຍອດຄ້າງຂອງເດືອນກ່ອນຂອງຫ້ອງນີ້ — ດຶງມາບວກໃນໃບຮັບເງິນ
+  const carriedItems = arrearsItems(ctx, invoice);
+  const carried = carriedItems.reduce((sum, item) => sum + item.amount, 0);
+
   const rows = [
+    ...(carried > 0
+      ? [{ label: "ຍອດຄ້າງເດືອນກ່ອນ", detail: arrearsDetail(carriedItems), value: carried }]
+      : []),
     { label: "ຄ່າເຊົ່າຫ້ອງ", detail: perUnit(Number(invoice.rent) || 0, "ເດືອນ"), value: Number(invoice.rent) || 0 },
     {
       label: "ຄ່າໄຟຟ້າ",
@@ -73,8 +81,9 @@ export default function ReceiptPaper({ invoice, copy }: { invoice: Invoice; copy
     { label: "ຄ່າອື່ນໆ", detail: "", value: Number(invoice.other) || 0 }
   ].filter((row) => row.value > 0);
 
-  const total = invoiceTotal(ctx, invoice);
-  const paid = invoice.paid ? total : 0;
+  const ownTotal = invoiceTotal(ctx, invoice);
+  const total = ownTotal + carried;
+  const paid = invoice.paid ? ownTotal : 0;
   const balance = total - paid;
 
   const dueText = String(invoice.due || "").trim() || `10 ${shortMonth(Number(invoice.month), Number(invoice.year))}`;
@@ -196,8 +205,8 @@ export default function ReceiptPaper({ invoice, copy }: { invoice: Invoice; copy
             <Text className="rcp-sum-label">ຍອດຄ້າງຊຳລະ</Text>
             <Text className={`rcp-sum-balance tnum${balance > 0 ? " is-due" : ""}`}>{money(balance, currency)}</Text>
           </Group>
-          <Text className={`rcp-status${invoice.paid ? " is-paid" : " is-due"}`}>
-            {invoice.paid ? "ຊຳລະແລ້ວ" : "ຍັງບໍ່ຊຳລະ"}
+          <Text className={`rcp-status${balance <= 0 ? " is-paid" : " is-due"}`}>
+            {balance <= 0 ? "ຊຳລະແລ້ວ" : invoice.paid ? "ຍັງມີຍອດຄ້າງເດືອນກ່ອນ" : "ຍັງບໍ່ຊຳລະ"}
           </Text>
 
           {balance > 0 ? (
@@ -241,7 +250,7 @@ export default function ReceiptPaper({ invoice, copy }: { invoice: Invoice; copy
       </Box>
 
       <Text className="rcp-thanks">
-        {invoice.paid ? "ຂອບໃຈທີ່ຊຳລະເງິນ · ເອກະສານອອກໂດຍລະບົບ" : "ເອກະສານສະແດງຍອດຄ້າງ · ຍັງບໍ່ມີຜົນຮັບເງິນ"}
+        {balance <= 0 ? "ຂອບໃຈທີ່ຊຳລະເງິນ · ເອກະສານອອກໂດຍລະບົບ" : "ເອກະສານສະແດງຍອດຄ້າງ · ຍັງບໍ່ມີຜົນຮັບເງິນ"}
       </Text>
     </Box>
   );

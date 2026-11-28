@@ -1,8 +1,14 @@
+import { currentSession } from "../auth/auth";
 import type { AppData, Invoice, Tenant } from "../data/types";
 
 export function logActivity(data: AppData, kind: string, title: string, detail = "") {
   const list = Array.isArray(data.settings.activity) ? data.settings.activity : [];
-  data.settings.activity = [{ t: Date.now(), kind, title, detail }, ...list].slice(0, 500);
+  // ບັນທຶກວ່າໃຜເປັນຜູ້ເຮັດລາຍການນີ້
+  const actor = currentSession();
+  data.settings.activity = [
+    { t: Date.now(), kind, title, detail, by: actor?.name || "", byRole: actor?.role || "" },
+    ...list
+  ].slice(0, 500);
 }
 
 export function syncRoomsFromTenants(data: AppData) {

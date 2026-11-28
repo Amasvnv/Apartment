@@ -76,6 +76,8 @@ export interface ActivityItem {
   kind: string;
   title: string;
   detail: string;
+  by?: string;
+  byRole?: string;
 }
 
 export interface Rates {
