@@ -113,6 +113,23 @@ const emptyUser = (): AptUser => ({
   perms: {}
 });
 
+/* ສ້າງຜູ້ໃຊ້ທີ່ຈະບັນທຶກ: ສົ່ງ pin ສະເພາະຕອນຜູ້ໃຊ້ພິມ PIN ໃໝ່ */
+const withPin = (form: AptUser, editingHasPin: boolean, legacyPin: string): AptUser => {
+  const { hasPin: _hasPin, ...rest } = form;
+  const next: AptUser = { ...rest, name: form.name.trim() };
+  if (form.pin) {
+    next.pin = form.pin;
+    next.hasPin = true;
+  } else if (legacyPin) {
+    next.pin = legacyPin;
+    next.hasPin = true;
+  } else {
+    delete next.pin;
+    next.hasPin = editingHasPin;
+  }
+  return next;
+};
+
 const initials = (name: string) =>
   name
     .trim()
@@ -127,18 +144,29 @@ export default function Users() {
   const [opened, setOpened] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<AptUser>(emptyUser());
+  // apt-api ບໍ່ສົ່ງຄ່າ PIN ມາ: ຮູ້ພຽງວ່າມີ PIN ແລ້ວ ຫຼື ບໍ່
+  const [editingHasPin, setEditingHasPin] = useState(false);
+  // ໂໝດເກົ່າ (PostgREST) ຍັງມີ pin ຢູ່ — ເກັບໄວ້ເພື່ອບໍ່ໃຫ້ຫາຍຕອນບັນທຶກ
+  const [legacyPin, setLegacyPin] = useState("");
 
   const users = data.settings.users || [];
+  // ຜູ້ໃຊ້ໃໝ່ ຫຼື ຜູ້ທີ່ຍັງບໍ່ມີ PIN ຕ້ອງໃສ່ PIN; ຜູ້ທີ່ມີແລ້ວປ່ອຍວ່າງໄດ້
+  const pinOk = form.pin ? form.pin.length >= 4 : editingHasPin;
 
   const openAdd = () => {
     setEditingId(null);
+    setEditingHasPin(false);
+    setLegacyPin("");
     setForm({ ...emptyUser(), id: `U-${String(Date.now()).slice(-5)}` });
     setOpened(true);
   };
 
   const openEdit = (target: AptUser) => {
     setEditingId(target.id);
-    setForm({ ...target, perms: JSON.parse(JSON.stringify(target.perms || {})) });
+    setEditingHasPin(!!(target.hasPin ?? target.pin));
+    setLegacyPin(target.pin || "");
+    // ບໍ່ prefill ຄ່າ PIN ລົງໃນຊ່ອງ — ປ່ອຍວ່າງ = ບໍ່ປ່ຽນ
+    setForm({ ...target, pin: "", perms: JSON.parse(JSON.stringify(target.perms || {})) });
     setOpened(true);
   };
 
@@ -164,12 +192,12 @@ export default function Users() {
   const [confirmError, setConfirmError] = useState("");
 
   const submit = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim() || !pinOk) return;
     setSavingForm(true);
     const ok = await commit((draft) => {
       if (!draft.settings.users) draft.settings.users = [];
       const index = draft.settings.users.findIndex((item) => item.id === (editingId ?? form.id));
-      const next: AptUser = { ...form, name: form.name.trim() };
+      const next = withPin(form, editingHasPin, legacyPin);
       if (index >= 0) draft.settings.users[index] = next;
       else draft.settings.users.push(next);
       logActivity(draft, "users", editingId ? "ແກ້ໄຂຜູ້ໃຊ້" : "ເພີ່ມຜູ້ໃຊ້", `${next.name} · ${ROLES[next.role]}`);
@@ -354,7 +382,7 @@ export default function Users() {
                         </span>
                         <span className="usr-meta">
                           <IconLock size={11} />
-                          {entry.pin ? "PIN ••••" : "ຍັງບໍ່ມີ PIN"}
+                          {(entry.hasPin ?? !!entry.pin) ? "PIN ••••" : "ຍັງບໍ່ມີ PIN"}
                         </span>
                       </Group>
                     </Box>
@@ -492,7 +520,8 @@ export default function Users() {
                 onChange={(event) => setForm({ ...form, pin: event.currentTarget.value.replace(/\D/g, "").slice(0, 6) })}
                 leftSection={<IconLock size={14} />}
                 inputMode="numeric"
-                placeholder="••••"
+                placeholder={editingHasPin ? "ປ່ອຍວ່າງ = ຄົງ PIN ເດີມ" : "ຕ້ອງໃສ່ 4–6 ໂຕເລກ"}
+                error={form.pin && form.pin.length < 4 ? "PIN ຕ້ອງມີ 4–6 ໂຕເລກ" : null}
               />
               <Box>
                 <Text className="usr-form-label">ສະຖານະບັນຊີ</Text>
@@ -596,7 +625,7 @@ export default function Users() {
             <Button variant="default" onClick={() => setOpened(false)}>
               ຍົກເລີກ
             </Button>
-            <Button className="btn-grad" onClick={submit} loading={savingForm} disabled={!form.name.trim()}>
+            <Button className="btn-grad" onClick={submit} loading={savingForm} disabled={!form.name.trim() || !pinOk}>
               ບັນທຶກ
             </Button>
           </Group>

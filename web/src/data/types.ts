@@ -66,7 +66,10 @@ export interface AptUser {
   name: string;
   phone: string;
   role: UserRole;
-  pin: string;
+  /** ມີໃນໂໝດເກົ່າ (PostgREST); apt-api ບໍ່ສົ່ງຄ່າ PIN ອອກມາ */
+  pin?: string;
+  /** apt-api: ຜູ້ໃຊ້ນີ້ມີ PIN ແລ້ວ (ບໍ່ເຜີຍຄ່າ) */
+  hasPin?: boolean;
   active: boolean;
   perms: Partial<Record<string, PermAction[]>>;
 }
