@@ -1,6 +1,8 @@
 import { Box, Group, Table, Text } from "@mantine/core";
 import logoUrl from "../assets/souvannahvong-logo-cut.webp";
 import qrUrl from "../assets/lao-qr.webp";
+import BillCheckQr from "./BillCheckQr";
+import BillNote from "./BillNote";
 import { useStore } from "../data/store";
 import type { Invoice } from "../data/types";
 import { arrearsDetail, arrearsItems } from "../lib/arrears";
@@ -16,6 +18,7 @@ import {
   residentRoomCount,
   serviceCostFor,
   tenantOfRoom,
+  tenantPeople,
   trashCostFor,
   waterCostFor
 } from "../lib/compute";
@@ -35,6 +38,8 @@ export default function BillPaper({ invoice }: { invoice: Invoice }) {
   const tenant = tenantOfRoom(data.tenants, invoice.room) || data.tenants.find((item) => item.name === invoice.tenant);
   const people = residentPeople(data.tenants);
   const rooms = residentRoomCount(data.tenants);
+  const roomPeople = tenant ? tenantPeople(tenant) : 0;
+  const away = !!tenant && (tenant.stayStatus || "resident") === "away";
 
   // ລາຍລະອຽດຄ່າສ້ອມແປງ: ຊື່ລາຍການທີ່ແຈ້ງໃນເດືອນນີ້ ຂອງຫ້ອງນີ້
   const repairs = repairItemsFor(ctx, invoice.room, invoiceMonthKey(invoice));
@@ -59,7 +64,9 @@ export default function BillPaper({ invoice }: { invoice: Invoice }) {
     },
     {
       label: "ຄ່ານ້ຳປະປາ",
-      detail: `${money(rates.waterTotal, currency)} ÷ ${people} ຄົນ`,
+      detail: roomPeople
+        ? `${money(rates.waterTotal, currency)} ÷ ${people} ຄົນ × ${roomPeople} ຄົນ`
+        : `${money(rates.waterTotal, currency)} ÷ ${people} ຄົນ`,
       value: waterCostFor(ctx, invoice.room, rates)
     },
     {
@@ -157,11 +164,16 @@ export default function BillPaper({ invoice }: { invoice: Invoice }) {
             <Text className="rcp-payee-label">ຜູ້ຊຳລະເງິນ</Text>
             <Text className="rcp-payee-name">{invoice.tenant || tenant?.name || "—"}</Text>
             <Text className="rcp-payee-sub">
-              ຫ້ອງ {invoice.room} · ມິເຕີໄຟ {num(invoice.kwh)} kWh · ນ້ຳ {num(invoice.m3)} m³
+              ຫ້ອງ {invoice.room} · {roomPeople ? `${roomPeople} ຄົນ · ` : ""}ມິເຕີໄຟ {num(invoice.kwh)} kWh · ນ້ຳ {num(invoice.m3)} m³
             </Text>
+            {away ? (
+              <Text className="rcp-payee-note">
+                ໄປເຮັດວຽກຕ່າງແຂວງ · ບໍ່ຄິດຄ່ານ້ຳປະປາ, ຄ່າຂີ້ເຫຍື້ອ ແລະ ຄ່າບໍລິການ
+              </Text>
+            ) : null}
           </Box>
 
-          <Table className="rcp-table" verticalSpacing={15} horizontalSpacing={0} withRowBorders={false}>
+          <Table className="rcp-table" verticalSpacing={8} horizontalSpacing={0} withRowBorders={false}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th pl={0}>ລາຍການ ແລະ ລາຄາຕໍ່ໜ່ວຍ</Table.Th>
@@ -191,6 +203,8 @@ export default function BillPaper({ invoice }: { invoice: Invoice }) {
               ))}
             </Table.Tbody>
           </Table>
+
+          <BillCheckQr room={invoice.room} />
         </Box>
 
         <Box className="rcp-sum">
@@ -230,13 +244,7 @@ export default function BillPaper({ invoice }: { invoice: Invoice }) {
         </Box>
       </Box>
 
-      {note1 || note2 ? (
-        <Box className="rcp-note">
-          <Text className="rcp-note-title">ໝາຍເຫດ</Text>
-          {note1 ? <Text className="rcp-note-text">{note1}</Text> : null}
-          {note2 ? <Text className="rcp-note-text">{note2}</Text> : null}
-        </Box>
-      ) : null}
+      <BillNote note1={note1} note2={note2} />
 
       <Text className="rcp-thanks">
         {due <= 0

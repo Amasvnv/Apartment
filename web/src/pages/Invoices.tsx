@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Alert,
   Badge,
   Box,
   Button,
@@ -20,6 +21,7 @@ import {
   IconFileInvoice,
   IconFilePlus,
   IconInbox,
+  IconPlaneTilt,
   IconPrinter,
   IconReceipt,
   IconReceipt2,
@@ -69,6 +71,12 @@ export default function Invoices() {
   const list = [...monthInvoices(ctx, monthNumber, year)].sort((a, b) => a.room.localeCompare(b.room, "lo", { numeric: true }));
   const stats = invoiceStats(ctx, list);
   const missing = data.rooms.filter((room) => room.status === "occupied" && !list.some((invoice) => invoice.room === room.no));
+
+  // ຫ້ອງທີ່ຜູ້ເຊົ່າໄປເຮັດວຽກຕ່າງແຂວງ — ບໍ່ຖືກຄິດຄ່ານ້ຳປະປາ, ຄ່າຂີ້ເຫຍື້ອ ແລະ ຄ່າບໍລິການ
+  const awayRooms = data.tenants
+    .filter((tenant) => tenant.stayStatus === "away")
+    .map((tenant) => tenant.room)
+    .sort((a, b) => String(a).localeCompare(String(b), "lo", { numeric: true }));
 
   const filtered = list.filter(
     (invoice) =>
@@ -236,6 +244,20 @@ export default function Invoices() {
         />
       </Box>
 
+      {awayRooms.length ? (
+        <Alert
+          variant="light"
+          color="orange"
+          radius="lg"
+          icon={<IconPlaneTilt size={16} />}
+          title={`ຫ້ອງທີ່ໄປເຮັດວຽກຕ່າງແຂວງ ${awayRooms.length} ຫ້ອງ`}
+        >
+          <Text size="xs">
+            ຫ້ອງ {awayRooms.join(", ")} · ບໍ່ຄິດຄ່ານ້ຳປະປາ, ຄ່າຂີ້ເຫຍື້ອ ແລະ ຄ່າບໍລິການ (ຍັງຄິດຄ່າເຊົ່າ ແລະ ຄ່າໄຟຟ້າ)
+          </Text>
+        </Alert>
+      ) : null}
+
       <Stack gap={10}>
         <Group justify="space-between" gap="sm" wrap="wrap">
           <Group gap={8}>
@@ -256,6 +278,8 @@ export default function Invoices() {
           // ຍອດຄ້າງຈາກເດືອນກ່ອນຂອງຫ້ອງນີ້ (ຖືກບວກໃນໃບບີນປະຈຸບັນ)
           const carriedItems = arrearsItems(ctx, invoice);
           const carried = carriedItems.reduce((sum, item) => sum + item.amount, 0);
+          const rowTenant = data.tenants.find((tenant) => String(tenant.room) === String(invoice.room));
+          const away = rowTenant?.stayStatus === "away";
           return (
             <Box key={invoice.no} className={`rep-row lift inv-row${invoice.paid ? " is-paid" : " is-unpaid"}`}>
               <Box className="rep-ico" style={{ color: invoice.paid ? "#12a06a" : "#c98a1f" }}>
@@ -279,6 +303,13 @@ export default function Invoices() {
 
               <Group className="rep-meta" gap={8}>
                 <span className="rep-chip">ຫ້ອງ {invoice.room}</span>
+                {away ? (
+                  <Tooltip label="ໄປເຮັດວຽກຕ່າງແຂວງ · ບໍ່ຄິດຄ່ານ້ຳ, ຂີ້ເຫຍື້ອ, ບໍລິການ">
+                    <Badge variant="light" color="orange" radius="xl" size="sm">
+                      ໄປຕ່າງແຂວງ
+                    </Badge>
+                  </Tooltip>
+                ) : null}
                 {carried > 0 ? (
                   <Tooltip label={`ຄ້າງ: ${arrearsDetail(carriedItems)}`} multiline w={300}>
                     <Badge variant="light" color="orange" radius="xl" size="sm">

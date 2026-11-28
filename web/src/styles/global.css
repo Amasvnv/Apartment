@@ -4342,6 +4342,14 @@ a {
   margin-top: 1px;
 }
 
+.rcp-payee-note {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #b4741b;
+  margin-top: 3px;
+}
+
 .rcp-table {
   margin-top: 6px;
 }
@@ -4448,6 +4456,21 @@ a {
   border-radius: 0;
 }
 
+/* ໜ້າ A4 ຕອນສ້າງ PDF: ກະດາດໜຶ່ງແຜ່ນ = ໜຶ່ງໜ້າ A4 (ຄວາມກວ້າງຖືກຄິດໄລ່ໃນ pdf.ts ໃຫ້ອັດຕາສ່ວນພໍດີ A4) */
+.rcp-paper.is-pdf {
+  min-height: 1123px;
+  padding: 26px 30px 22px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-size: 13px;
+  margin: 0;
+}
+
+.rcp-paper.is-pdf .rcp-thanks {
+  margin-top: auto;
+}
+
 .rcp-rates {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -4545,6 +4568,97 @@ a {
   margin-top: 1px;
 }
 
+/* ---------- QR ກວດໃບບີນອອນລາຍ (ໃນໃບບີນ / ໃບຮັບເງິນ) ---------- */
+
+.rcp-scan {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px 9px 9px;
+  border: 1px dashed #bcd9f8;
+  border-radius: 12px;
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(6, 182, 212, 0.08), transparent 60%),
+    linear-gradient(135deg, #f4faff 0%, #ffffff 62%);
+}
+
+.rcp-scan-code {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: 9px;
+  background: #fff;
+  border: 1px solid #dbe9fb;
+  box-shadow: 0 6px 14px -10px rgba(11, 37, 69, 0.55);
+}
+
+.rcp-scan-code canvas {
+  display: block;
+  width: 78px !important;
+  height: 78px !important;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.rcp-scan-body {
+  min-width: 0;
+}
+
+.rcp-scan-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rcp-scan-kicker {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #1663c4;
+}
+
+.rcp-scan-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid #bfe8d6;
+  background: #e9f9f1;
+  color: #0e7c5a;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.rcp-scan-title {
+  margin-top: 3px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0b2545;
+}
+
+.rcp-scan-text {
+  margin-top: 2px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--text-body);
+}
+
+.rcp-scan-url {
+  margin-top: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #4b6b8f;
+  word-break: break-all;
+}
+
 .rcp-status {
   align-self: flex-start;
   font-size: 11px;
@@ -4570,26 +4684,55 @@ a {
 }
 
 .rcp-note {
-  margin-top: 12px;
+  margin-top: 14px;
   background: #fffbf2;
+  border: 1px solid #f3e2bd;
   border-left: 3px solid #f0c879;
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 10px;
+  padding: 10px 14px 12px;
+}
+
+.rcp-note-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 7px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed #efdcb6;
 }
 
 .rcp-note-title {
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 14.5px;
+  font-weight: 800;
   letter-spacing: 0.04em;
   color: #a97b1f;
 }
 
+.rcp-note-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 19px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid #f2dcae;
+  background: #fdf0d7;
+  color: #a97b1f;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
 .rcp-note-text {
+  margin: 0 0 4px;
   font-size: 13.5px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--text-body);
-  margin-top: 2px;
   white-space: pre-line;
+}
+
+.rcp-note-text:last-child {
+  margin-bottom: 0;
 }
 
 .rcp-sign {
@@ -4691,11 +4834,18 @@ a {
     border-radius: 0 !important;
     max-width: none !important;
     padding: 0 !important;
+    min-height: 277mm !important;
+    display: flex;
+    flex-direction: column;
     font-size: 13px;
     break-inside: avoid;
     page-break-inside: avoid;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .rcp-paper .rcp-thanks {
+    margin-top: auto;
   }
 
   .bill-paper,
